@@ -1,0 +1,47 @@
+# 依赖
+node_modules
+**/node_modules
+
+# Git
+.git
+.github/workflows
+
+# 构建产物 / 缓存
+dist
+build
+.vite
+.next
+
+# 视频渲染产物(运行时生成,不打进镜像)
+public/generated
+compositions/*/renders
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# IDE / 编辑器
+.vscode
+.idea
+*.swp
+
+# 环境敏感
+.env.local
+.env.*.local
+
+# Claude 本机
+.claude/settings.local.json
+
+# 日志
+*.log
+npm-debug.log*
+
+# 包归档
+*.zip
+*.tar.gz
+
+# Docker 自身
+Dockerfile
+docker-compose.yml
+.dockerignore
+SELF_HOST.md

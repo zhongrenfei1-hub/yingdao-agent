@@ -1,0 +1,33 @@
+# 影刀 Self-Hosted 单容器配置
+# 用法:`docker compose up -d`,然后浏览器打开 http://localhost:5180
+# 停服务:`docker compose down`
+
+services:
+  yingdao:
+    build: .
+    container_name: yingdao-agent
+    image: yingdao-agent:local
+    ports:
+      - "5180:5180"
+    volumes:
+      # 把渲染产物挂到宿主机,关掉容器视频也还在
+      - ./public/generated:/app/public/generated
+
+      # === 本地素材文件夹联动(三个关键点之一)===
+      # 取消注释,把宿主机的素材目录挂进 composition 的 assets/ 里
+      # 例:你的素材在 /Users/你/Movies/影刀素材,3 个 mp4 + 若干 jpg
+      # - /Users/yourname/Movies/yingdao-assets:/app/compositions/short-video-demo/assets:ro
+
+      # === 开发热更新(可选)===
+      # 取消注释让代码改动立即生效,适合自己改代码迭代
+      # - ./src:/app/src
+      # - ./compositions:/app/compositions
+      # - ./vite.config.ts:/app/vite.config.ts
+    environment:
+      - NODE_ENV=development
+      # hyperframes 在 docker 里的 Chrome 需要 --no-sandbox
+      # 0.6.12 大多数情况自动检测,如有问题手动启:HF_NO_SANDBOX=1
+    restart: unless-stopped
+    # hyperframes 渲染峰值内存 1-2GB,给宽裕一点
+    mem_limit: 3g
+    shm_size: 1g  # Chrome 需要更大的 /dev/shm
