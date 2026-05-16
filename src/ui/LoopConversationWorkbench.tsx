@@ -53,7 +53,7 @@ function CycleMap({ configId }: { configId: string }) {
         {STAGE_ORDER.map((stage, index) => (
           <div key={stage} className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 rounded-full ${
-              index < currentIdx ? 'bg-sage-green' : index === currentIdx ? 'bg-terracotta animate-pulse' : 'bg-warm-sand'
+              index < currentIdx ? 'bg-sage-green' : index === currentIdx ? 'bg-terracotta ring-2 ring-terracotta/25' : 'bg-warm-sand'
             }`} />
             <span className={`text-xs ${
               index === currentIdx ? 'font-medium text-near-black' : index < currentIdx ? 'text-sage-green' : 'text-stone-gray'
@@ -77,11 +77,15 @@ function CycleMap({ configId }: { configId: string }) {
 function MemoryShelf({ employeeId }: { employeeId: string }) {
   const { t } = useI18n();
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
-  const cycles = useLoopStore((s) => s.cycles);
+  // 不订阅整个 cycles 对象(每次 task 状态变化都触发 re-render),
+  // 只在 cycle 阶段集合变化时(包含 awaiting_memory → cycle_complete 这种触发记忆确认的转变)reload
+  const cycleStageSignal = useLoopStore((s) =>
+    Object.values(s.cycles).map((c) => `${c.id}:${c.stage}`).join(','),
+  );
 
   useEffect(() => {
     listAgentMemories(employeeId, 6).then(setMemories);
-  }, [employeeId, cycles]);
+  }, [employeeId, cycleStageSignal]);
 
   return (
     <section className="card-glass p-4">
@@ -104,7 +108,7 @@ function MemoryShelf({ employeeId }: { employeeId: string }) {
 
 export default function LoopConversationWorkbench({ runtime }: LoopConversationWorkbenchProps) {
   const { t, locale } = useI18n();
-  const activeConfigId = ALL_LOOP_CONFIGS[0]?.id ?? '';
+  const [activeConfigId, setActiveConfigId] = useState(ALL_LOOP_CONFIGS[0]?.id ?? '');
   const [session, setSession] = useState<LoopChatSession | null>(null);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
@@ -171,9 +175,20 @@ export default function LoopConversationWorkbench({ runtime }: LoopConversationW
             <h2 className="mt-1 text-base font-semibold text-near-black">{t('chat.subtitle')}</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-lg bg-terracotta/10 px-3 py-1.5 text-xs font-medium text-terracotta">
-              <span>{config.icon}</span> {getLoopConfigLabel(config.id, locale)}
-            </span>
+            {ALL_LOOP_CONFIGS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setActiveConfigId(c.id)}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  activeConfigId === c.id
+                    ? 'bg-terracotta/10 text-terracotta'
+                    : 'bg-warm-sand/40 text-olive-gray hover:bg-warm-sand/70'
+                }`}
+              >
+                <span>{c.icon}</span> {getLoopConfigLabel(c.id, locale)}
+              </button>
+            ))}
             <button type="button" onClick={handleReset} className="btn-ghost text-xs" title={t('chat.reset')}>
               <RotateCcw size={13} /> {t('chat.reset')}
             </button>

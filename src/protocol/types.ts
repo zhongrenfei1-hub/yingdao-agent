@@ -47,6 +47,7 @@ export interface LoopMessageMetadata {
     content: string;
     appName: string;
     artifactType: string;
+    fields?: Record<string, string | string[]>;
   };
   // 发布卡片
   publish?: {

@@ -44,6 +44,44 @@ export default function LoopDraftCard({ task, onApprove, onReject, onViewFull }:
 
       {task.draft && (
         <div className="mt-3">
+          {task.draft.fields?.videoUrl && (
+            <div className="mb-3 overflow-hidden rounded-xl border border-border-cream bg-black">
+              <video
+                controls
+                src={String(task.draft.fields.videoUrl)}
+                poster={task.draft.fields.posterUrl ? String(task.draft.fields.posterUrl) : undefined}
+                className="aspect-[9/16] w-full max-w-[260px] bg-black"
+              />
+            </div>
+          )}
+          {task.draft.fields?.videoUrl && (
+            <dl className="mb-3 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-xs text-stone-gray">
+              {task.draft.fields.adapter && (
+                <>
+                  <dt>{t('video.adapter')}</dt>
+                  <dd className="text-near-black">{String(task.draft.fields.adapter)}</dd>
+                </>
+              )}
+              {task.draft.fields.durationSeconds && (
+                <>
+                  <dt>{t('video.duration')}</dt>
+                  <dd className="text-near-black">{String(task.draft.fields.durationSeconds)}s</dd>
+                </>
+              )}
+              {task.draft.fields.outputPath && (
+                <>
+                  <dt>{t('video.output')}</dt>
+                  <dd className="truncate text-near-black">{String(task.draft.fields.outputPath)}</dd>
+                </>
+              )}
+            </dl>
+          )}
+          {task.draft.fields?.renderError && (
+            <div className="mb-3 rounded-xl border border-terracotta/20 bg-terracotta/5 p-3 text-xs">
+              <p className="font-medium text-terracotta">{t('video.renderError')}</p>
+              <p className="mt-1 text-near-black">{String(task.draft.fields.renderError)}</p>
+            </div>
+          )}
           <p className="whitespace-pre-wrap text-sm leading-6 text-olive-gray">
             {expanded ? task.draft.content : task.draft.preview}
           </p>

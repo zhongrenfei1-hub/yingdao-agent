@@ -79,6 +79,82 @@ export const TOOL_CATALOG: AIToolDefinition[] = [
     ],
     outputInstruction: '输出优化后的内容，使其更容易被AI引擎引用。',
   },
+  {
+    id: 'short-video-strategist',
+    name: '短视频选题策划',
+    description: '基于账号定位、历史数据和本地素材策划本轮短视频选题',
+    icon: '🎯',
+    inputSchema: [
+      { id: 'accountPositioning', label: '账号定位', type: 'text', required: true },
+      { id: 'audience', label: '目标人群', type: 'text' },
+      { id: 'goal', label: '本轮目标', type: 'textarea' },
+      { id: 'materialLibrary', label: '本地素材摘要', type: 'textarea' },
+    ],
+    outputInstruction: '输出 3 个候选选题，每个包含：目标平台、目标人群、3 秒钩子、核心卖点、本地素材使用建议、A/B 测试假设、本轮目标指标（3 秒留存/完播/收藏/评论/涨粉）。必须引用历史数据或记忆，说明为什么这个选题适合本轮目标。',
+  },
+  {
+    id: 'short-video-script-writer',
+    name: '短视频脚本分镜',
+    description: '将选题转化为可拍摄/可剪辑的脚本与分镜',
+    icon: '🎬',
+    inputSchema: [
+      { id: 'topic', label: '选题', type: 'text', required: true },
+      { id: 'platform', label: '目标平台', type: 'text', placeholder: '抖音/TikTok/快手/小红书' },
+      { id: 'duration', label: '时长', type: 'text', placeholder: '30s' },
+      { id: 'hook', label: '3 秒钩子', type: 'text' },
+      { id: 'sellingPoint', label: '核心卖点', type: 'text' },
+    ],
+    outputInstruction: `严格输出 JSON（不要 markdown 代码块），schema：
+{
+  "title": "标题",
+  "cover": "封面文案",
+  "duration": 12,
+  "platform": "抖音 / TikTok",
+  "hook": "0-3 秒钩子文案",
+  "scenes": [
+    { "id": "hook", "duration": 3, "visual": "画面描述", "voiceover": "旁白", "caption": "字幕", "transition": "cut" },
+    { "id": "demo", "duration": 5, "visual": "...", "voiceover": "...", "caption": "...", "transition": "fade" },
+    { "id": "cta", "duration": 4, "visual": "...", "voiceover": "...", "caption": "...", "transition": "cut" }
+  ],
+  "cta": "...",
+  "risks": ["平台违规词", "版权风险", "品牌限制"]
+}
+scenes 各项的 duration 总和应等于 duration。id 用 hook/demo/cta 之一以便下游 remix 识别镜头类型。`,
+  },
+  {
+    id: 'ai-video-generation-brief',
+    name: 'AI 视频生成提示词',
+    description: '将分镜转换为 Sora/Veo/Seedance/Kling 等模型可用的视频生成 prompt',
+    icon: '✨',
+    inputSchema: [
+      { id: 'script', label: '脚本与分镜', type: 'textarea', required: true },
+      { id: 'visualStyle', label: '视觉风格', type: 'text', placeholder: '冷静实拍/CG 抽象/胶片质感' },
+      { id: 'model', label: '目标模型', type: 'text', placeholder: 'sora/veo/seedance/kling/runway/pika' },
+    ],
+    outputInstruction: '逐镜头输出 prompt，每个镜头包含：主体、动作、镜头运动、光线、构图、时长、负面提示词。同时标注哪些镜头应由 AI 生成、哪些应使用本地素材。',
+  },
+  {
+    id: 'local-asset-remix-planner',
+    name: '本地素材自动混剪',
+    description: '按脚本调用本地 FFmpeg 渲染粗剪视频，输出 1080×1920 9:16 mp4 + 封面',
+    icon: '🎞️',
+    inputSchema: [
+      { id: 'script', label: '脚本与分镜', type: 'textarea' },
+      { id: 'assetSummary', label: '可用素材摘要', type: 'textarea' },
+    ],
+    outputInstruction: '（本任务由 FFmpeg adapter 直接渲染，不调用 LLM）',
+  },
+  {
+    id: 'short-video-publish-packager',
+    name: '短视频发布包',
+    description: '为目标平台生成发布文案、检查清单与 24h 观察指标',
+    icon: '📦',
+    inputSchema: [
+      { id: 'script', label: '脚本与选题摘要', type: 'textarea', required: true },
+      { id: 'platforms', label: '目标平台', type: 'text', placeholder: '抖音/TikTok/快手/小红书' },
+    ],
+    outputInstruction: '为每个目标平台输出：标题、简介/caption、话题标签、建议发布时间、A/B 版本。附发布前合规检查清单（音乐授权、人像授权、商标 Logo、平台敏感词、夸大宣传）与 24 小时观察指标（播放、完播率、互动率、涨粉）。',
+  },
 ];
 
 export function findTool(toolId: string): AIToolDefinition | undefined {

@@ -28,3 +28,7 @@ coverage/
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Generated demo video assets
+public/generated/*
+!public/generated/.gitkeep

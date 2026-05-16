@@ -8,7 +8,7 @@
  * - progress: 加载态
  */
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { BarChart3, Bot, Brain, Check, ChevronDown, ChevronUp, ClipboardList, Copy, FileText, Loader2, Rocket, User } from 'lucide-react';
 import type { LoopMessage, QuickAction, UserAction } from '../protocol/types';
 import { useI18n } from '../i18n';
@@ -62,7 +62,7 @@ function DraftExpander({ content }: { content: string }) {
   );
 }
 
-export default function ChatBubble({ message, onAction, isLast }: ChatBubbleProps) {
+function ChatBubble({ message, onAction, isLast }: ChatBubbleProps) {
   const { t } = useI18n();
   const isAI = message.role === 'ai' || message.role === 'system';
   const isProgress = message.type === 'progress';
@@ -120,6 +120,44 @@ export default function ChatBubble({ message, onAction, isLast }: ChatBubbleProp
                 <FileText size={13} /> {message.metadata.draft.appName}
               </p>
               <h3 className="text-base font-semibold text-near-black">{message.metadata.draft.title}</h3>
+              {message.metadata.draft.fields?.videoUrl && (
+                <div className="mt-3 overflow-hidden rounded-xl border border-border-cream bg-black">
+                  <video
+                    controls
+                    src={String(message.metadata.draft.fields.videoUrl)}
+                    poster={message.metadata.draft.fields.posterUrl ? String(message.metadata.draft.fields.posterUrl) : undefined}
+                    className="aspect-[9/16] w-full max-w-[260px] bg-black"
+                  />
+                </div>
+              )}
+              {message.metadata.draft.fields?.videoUrl && (
+                <dl className="mt-2 grid grid-cols-[auto,1fr] gap-x-3 gap-y-0.5 text-xs text-stone-gray">
+                  {message.metadata.draft.fields.adapter && (
+                    <>
+                      <dt>Adapter</dt>
+                      <dd className="text-near-black">{String(message.metadata.draft.fields.adapter)}</dd>
+                    </>
+                  )}
+                  {message.metadata.draft.fields.durationSeconds && (
+                    <>
+                      <dt>时长</dt>
+                      <dd className="text-near-black">{String(message.metadata.draft.fields.durationSeconds)}s</dd>
+                    </>
+                  )}
+                  {message.metadata.draft.fields.outputPath && (
+                    <>
+                      <dt>输出</dt>
+                      <dd className="truncate text-near-black">{String(message.metadata.draft.fields.outputPath)}</dd>
+                    </>
+                  )}
+                </dl>
+              )}
+              {message.metadata.draft.fields?.renderError && (
+                <div className="mt-2 rounded-lg border border-terracotta/20 bg-terracotta/5 p-2 text-xs">
+                  <p className="font-medium text-terracotta">渲染失败</p>
+                  <p className="mt-1 text-near-black">{String(message.metadata.draft.fields.renderError)}</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -199,3 +237,10 @@ export default function ChatBubble({ message, onAction, isLast }: ChatBubbleProp
     </div>
   );
 }
+
+// 只比较 message 引用 + isLast,忽略 onAction(它每次 render 都是新 useCallback,
+// 但 ChatBubble 不需要新引用 — 点击时调用的 onAction 仍是最新的因为 React 始终
+// 调用最新的 closure)
+export default memo(ChatBubble, (prev, next) =>
+  prev.message === next.message && prev.isLast === next.isLast,
+);

@@ -50,7 +50,8 @@ export interface HumanGateConfig {
 
 export type ArtifactType =
   | 'article' | 'social_post'
-  | 'seo_article' | 'geo_content' | 'content_plan' | 'review_report';
+  | 'seo_article' | 'geo_content' | 'content_plan' | 'review_report'
+  | 'video_script' | 'ai_video_prompt' | 'short_video_draft' | 'publish_pack';
 
 export type FeedbackMethod = 'quick_form' | 'chat_followup' | 'screenshot_ocr' | 'browser_clip';
 

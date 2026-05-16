@@ -81,6 +81,7 @@ function buildPlanPrompt(
 const VALID_ARTIFACT_TYPES = new Set([
   'article', 'social_post',
   'seo_article', 'geo_content', 'content_plan', 'review_report',
+  'video_script', 'ai_video_prompt', 'short_video_draft', 'publish_pack',
 ]);
 
 function normalizeTasks(rawTasks: unknown[], configId: string): LoopTask[] {

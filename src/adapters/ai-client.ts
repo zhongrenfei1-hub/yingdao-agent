@@ -65,7 +65,71 @@ function createDemoClient(): AIClient {
 
 function generateDemoPlanResponse(prompt: string): string {
   const english = wantsEnglish(prompt);
-  const isSEO = prompt.includes('SEO') || prompt.includes('seo');
+  const isYingdao = prompt.includes('local-asset-remix-planner') || prompt.includes('影刀');
+  const isSEO = !isYingdao && (prompt.includes('SEO') || prompt.includes('seo'));
+
+  if (isYingdao) {
+    return JSON.stringify({
+      summary: english
+        ? 'This cycle: produce one short video draft about how Yingdao remixes local assets automatically.'
+        : '本轮短视频计划：围绕"影刀自动混剪本地素材"做一条 9:16 抖音/TikTok 短视频。',
+      platforms: ['抖音', 'TikTok'],
+      keywords: ['影刀', '自动混剪', '本地素材', 'AI 视频'],
+      tasks: [
+        {
+          appToolId: 'short-video-strategist',
+          appName: '短视频选题策划',
+          artifactType: 'content_plan',
+          inputParams: {
+            accountPositioning: 'AI 工具与内容增长实操号',
+            audience: '独立开发者 / 内容运营 / AI 工具创业者',
+            goal: '让用户看到影刀如何把本地素材自动混剪成可发布的短视频',
+            materialLibrary: '产品录屏 12 段 / 口播 3 段 / Logo sting / BGM 2 首',
+          },
+        },
+        {
+          appToolId: 'short-video-script-writer',
+          appName: '短视频脚本分镜',
+          artifactType: 'video_script',
+          inputParams: {
+            topic: '影刀如何把本地素材自动混剪成短视频',
+            platform: '抖音 / TikTok',
+            duration: '12s',
+            hook: '你的本地素材积了一年，还在等剪辑师？',
+            sellingPoint: '一键自动混剪 + AI 视频补镜头',
+          },
+        },
+        {
+          appToolId: 'ai-video-generation-brief',
+          appName: 'AI 视频生成提示词',
+          artifactType: 'ai_video_prompt',
+          inputParams: {
+            script: '12 秒分镜：钩子 → 产品录屏 → AI 补镜头 → CTA',
+            visualStyle: '紫色冷静工程感 + 微动效',
+            model: 'seedance',
+          },
+        },
+        {
+          appToolId: 'local-asset-remix-planner',
+          appName: '本地素材自动混剪',
+          artifactType: 'short_video_draft',
+          inputParams: {
+            script: '12 秒 9:16 粗剪：紫色 gradients 占位 + 底部字幕安全区',
+            assetSummary: '产品录屏 / 口播 / Logo sting / BGM',
+          },
+        },
+        {
+          appToolId: 'short-video-publish-packager',
+          appName: '短视频发布包',
+          artifactType: 'publish_pack',
+          inputParams: {
+            script: '钩子+产品录屏+AI 补镜头+CTA',
+            platforms: '抖音 / TikTok',
+          },
+        },
+      ],
+    });
+  }
 
   if (isSEO) {
     if (english) {
@@ -175,6 +239,47 @@ function generateDemoPlanResponse(prompt: string): string {
 
 function generateDemoContentResponse(prompt: string): string {
   const english = wantsEnglish(prompt);
+
+  // 影刀:短视频脚本分镜 -> 输出结构化 JSON, 让下游 remix 按 scenes 切镜头
+  if (prompt.includes('short-video-script-writer') || prompt.includes('短视频脚本分镜')) {
+    return JSON.stringify({
+      title: english
+        ? 'Your local footage is piling up. Yingdao auto-remixes it.'
+        : '你的本地素材积了一年，影刀帮你自动混剪',
+      cover: english ? 'Yingdao · Auto Remix Demo' : '影刀 · 自动混剪 demo',
+      duration: 12,
+      platform: english ? 'TikTok / Reels' : '抖音 / TikTok',
+      hook: english ? 'Footage piling up, still waiting on an editor?' : '本地素材积了一年，还在等剪辑师？',
+      scenes: [
+        {
+          id: 'hook',
+          duration: 3,
+          visual: english ? 'Full-screen title card, pain-point hook' : '全屏标题卡 + 痛点抛出',
+          voiceover: english ? 'Footage piling up, still waiting on an editor?' : '本地素材积了一年，还在等剪辑师？',
+          caption: english ? 'Your assets, AI remixes them.' : '你的素材，AI 帮你混剪',
+          transition: 'cut',
+        },
+        {
+          id: 'demo',
+          duration: 5,
+          visual: english ? 'Product screen-recording with progress bar' : '产品录屏 + 进度条',
+          voiceover: english ? 'Yingdao reads your assets, follows your script, edits in seconds.' : '影刀读你的素材，按脚本自动剪',
+          caption: english ? 'Output in 60 seconds' : '一分钟出片',
+          transition: 'fade',
+        },
+        {
+          id: 'cta',
+          duration: 4,
+          visual: english ? 'Purple CTA button + logo' : '紫色 CTA 框 + Logo',
+          voiceover: english ? 'Try Yingdao now.' : '现在去试试影刀混剪',
+          caption: 'yingdao.com',
+          transition: 'cut',
+        },
+      ],
+      cta: english ? 'Tap the link to try Yingdao auto-remix' : '点链接试影刀混剪',
+      risks: ['不出现真实平台 Logo', 'BGM 必须使用授权曲目', '避免医疗 / 金融夸大宣传'],
+    }, null, 2);
+  }
 
   if (english) {
     return `# Why AI Agents Need Feedback Loops, Not Just Cron Jobs

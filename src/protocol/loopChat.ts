@@ -148,6 +148,7 @@ function buildDraftMessages(cycle: LoopCycle, locale: Locale): LoopMessage[] {
           content: task.draft.content,
           appName: task.appName,
           artifactType: task.artifactType,
+          fields: task.draft.fields,
         },
         actions,
         cycleId: cycle.id,

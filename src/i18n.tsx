@@ -34,6 +34,8 @@ const dictionaries = {
     'memory.notUsed': 'No prior memory has been used yet.',
     'loop.contentGrowth': 'Content Growth Loop',
     'loop.contentGrowth.description': 'Grow search and AI-answer visibility through planned content, feedback, review, and memory.',
+    'loop.yingdaoShortVideo': 'Yingdao Short Video Growth Loop',
+    'loop.yingdaoShortVideo.description': 'Plan topics, generate scripts and AI video prompts, auto-remix local assets, publish, and feed metrics back into the next cycle.',
     'stage.planning': 'Planning',
     'stage.awaiting_plan_review': 'Plan review',
     'stage.generating': 'Generating',
@@ -148,6 +150,14 @@ const dictionaries = {
     'artifact.geo_content': 'GEO content',
     'artifact.content_plan': 'Content plan',
     'artifact.review_report': 'Review report',
+    'artifact.video_script': 'Video script',
+    'artifact.ai_video_prompt': 'AI video prompt',
+    'artifact.short_video_draft': 'Short video draft',
+    'artifact.publish_pack': 'Publish pack',
+    'video.adapter': 'Adapter',
+    'video.duration': 'Duration',
+    'video.output': 'Output',
+    'video.renderError': 'Render failed',
     'common.none': 'None',
   },
   'zh-CN': {
@@ -179,6 +189,8 @@ const dictionaries = {
     'memory.notUsed': '本轮还未使用历史记忆。',
     'loop.contentGrowth': '内容增长闭环',
     'loop.contentGrowth.description': '通过计划、内容、反馈、复盘和记忆持续提升搜索与 AI 回答可见度。',
+    'loop.yingdaoShortVideo': '影刀短视频增长闭环',
+    'loop.yingdaoShortVideo.description': '基于账号定位、历史数据和本地素材，自动策划选题、生成脚本与 AI 视频提示词、本地素材自动混剪导出粗剪并复盘下一轮策略。',
     'stage.planning': '规划',
     'stage.awaiting_plan_review': '确认计划',
     'stage.generating': '生成',
@@ -293,6 +305,14 @@ const dictionaries = {
     'artifact.geo_content': 'GEO 内容',
     'artifact.content_plan': '内容计划',
     'artifact.review_report': '复盘报告',
+    'artifact.video_script': '脚本分镜',
+    'artifact.ai_video_prompt': 'AI 视频提示词',
+    'artifact.short_video_draft': '短视频草稿',
+    'artifact.publish_pack': '发布包',
+    'video.adapter': '渲染器',
+    'video.duration': '时长',
+    'video.output': '输出路径',
+    'video.renderError': '渲染失败',
     'common.none': '无',
   },
 } as const;
@@ -341,14 +361,24 @@ export function useI18n(): I18nContextValue {
   return ctx;
 }
 
+const LOOP_LABEL_KEYS: Record<string, MessageKey> = {
+  'seo-geo-growth': 'loop.contentGrowth',
+  'yingdao-short-video-growth': 'loop.yingdaoShortVideo',
+};
+
+const LOOP_DESCRIPTION_KEYS: Record<string, MessageKey> = {
+  'seo-geo-growth': 'loop.contentGrowth.description',
+  'yingdao-short-video-growth': 'loop.yingdaoShortVideo.description',
+};
+
 export function getLoopConfigLabel(configId: string, locale: Locale): string {
-  void configId;
-  return dictionaries[locale]['loop.contentGrowth'];
+  const key = LOOP_LABEL_KEYS[configId] ?? 'loop.contentGrowth';
+  return dictionaries[locale][key];
 }
 
 export function getLoopConfigDescription(configId: string, locale: Locale): string {
-  void configId;
-  return dictionaries[locale]['loop.contentGrowth.description'];
+  const key = LOOP_DESCRIPTION_KEYS[configId] ?? 'loop.contentGrowth.description';
+  return dictionaries[locale][key];
 }
 
 export function getOutputLanguageInstruction(locale: Locale): string {
