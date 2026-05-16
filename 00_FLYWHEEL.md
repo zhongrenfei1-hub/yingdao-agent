@@ -60,7 +60,7 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 ### P0
 - [x] **NEED-001** hyperframes@0.6.12 装到 yingdao-agent(devDep)
 - [x] **NEED-002** 第一个 composition demo(9:16 1080×1920)跑通 `lint`(0 err/warn)+ `validate`(0 console err)+ `render`(617 KB mp4 / 45.9s 渲染 / 5.3s 视频)
-- [ ] **NEED-003** `ScriptJson` → composition variables 映射(hyperframes-adapter)
+- [x] **NEED-003** `ScriptJson` → composition variables 映射(`src/adapters/hyperframes-variables.ts`,纯函数双端可用,typecheck pass)
 - [ ] **NEED-004** `/api/video/render` middleware 替换 ffmpeg,改走 `spawn npx hyperframes render`
 - [ ] **NEED-005** 影刀 `design.md` 落地(浅色 + 紫色调,贴用户审美)
 
@@ -81,7 +81,7 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | 阶段 | 主题 | 关键产出 | 完成 |
 |---|---|---|---|
 | **阶段 0** | 🏗️ hyperframes 基建 | 装包 + 第一个 demo composition 跑通 render | ✅ |
-| **阶段 1** | 🔌 ScriptJson 集成 | hyperframes-adapter + composition variables 化 | ☐ |
+| **阶段 1** | 🔌 ScriptJson 集成 | hyperframes-adapter + composition variables 化 | ✅ |
 | **阶段 2** | 🔄 middleware 切换 | `/api/video/render` 改走 hyperframes,ffmpeg 路径降级 | ☐ |
 | **阶段 3** | 🎨 design.md 落地 | 浅紫调一致,Workbench 美学统一 | ☐ |
 | **阶段 4** | 🗂️ 本地素材联动 | composition 读本地素材池 | ☐ |
@@ -104,12 +104,20 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 - [x] `compositions/short-video-demo/.gitignore` ignore renders/ 构建产物
 - [x] commit 第 1 圈(只 add 新文件 + package.json,不动用户 14 个 WIP)
 
-### 阶段 1:🔌 ScriptJson 集成(下一圈)
-- [ ] composition `<html>` 加 `data-composition-variables`,声明:title / hook / scenes(JSON 字符串)/ cta / theme
-- [ ] 内部 `getVariables()` 读值,动态填充 .title / .desc / .pill
-- [ ] 新建 `src/adapters/hyperframes-adapter.ts`,把 ScriptJson 映射成 `--variables '{...}'`
-- [ ] 用例:`renderHyperframesVideo({ cycleId, taskId, script })` 接口对齐现有 `VideoRenderResult`
-- [ ] `npx hyperframes render --variables '{"title":"测试","hook":"..."}'` 跑通参数化渲染
+### 阶段 1:🔌 ScriptJson 集成 ✅
+- [x] composition `<html>` 加 `data-composition-variables`,声明 7 个变量:badge / eyebrow / title1 / title2 / desc / cta / accent(含 color 类型)
+- [x] HTML 元素写 default 占位(单一真理源),`<script>` 用 `window.__hyperframes.getVariables()` 在 render 时覆盖,validate 时退化到占位
+- [x] 新建 `src/adapters/hyperframes-variables.ts`:`scriptToVariables(ScriptJson)` 纯函数
+- [x] `splitTitleTwoLines()`:中文/英文友好的标题两行拆分(\n → 分隔符 → 中点强切)
+- [x] `tsc --noEmit` 0 错误(adapter 引用 video-renderer ScriptJson 类型正确)
+- [x] `npx hyperframes render --variables '{"badge":"...","title1":"..."}'` 跑通,**692 KB mp4**,30s 渲染
+- [x] 两份 mp4 对比(默认 vs 参数):大小不同证明变量真生效
+
+### 阶段 2:🔄 middleware 切换(下一圈)
+- [ ] `src/adapters/hyperframes-renderer.ts`:Node-side `spawn npx hyperframes render` 封装(返回 VideoRenderResult)
+- [ ] vite.config.ts:`/api/video/render` middleware 改走 hyperframes-renderer,ffmpeg 路径作为降级
+- [ ] 修改 `video-renderer.ts` 接口对齐(若需要)
+- [ ] 端到端测试:从 React Workbench 触发 → 输出真带文字的 mp4
 
 ---
 
@@ -117,4 +125,5 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 
 | 日期 | 圈数 | 完成 | 失败 / 待修 | Commit |
 |---|---|---|---|---|
-| 2026-05-16 | 0 | 影刀飞轮宪章落地 + 阶段 0 hyperframes 基建:scaffold + composition 重写 + lint/validate/render 三件套跑通,617 KB mp4 出片 | PingFang SC 字体无 mapping → 改 Inter+Noto Sans SC | _待 commit_ |
+| 2026-05-16 | 0 | 影刀飞轮宪章落地 + 阶段 0 hyperframes 基建:scaffold + composition 重写 + lint/validate/render 三件套跑通,617 KB mp4 出片 | PingFang SC 字体无 mapping → 改 Inter+Noto Sans SC | `32ab00c` |
+| 2026-05-16 | 1 | 阶段 1 ScriptJson 集成:composition 7 变量化 + getVariables 注入 + ScriptJson 映射纯函数 + typecheck pass,692 KB mp4 参数化渲染 | __hyperframes 在 validate 不注入 → HTML 写 default + try-catch 降级 | _待 commit_ |

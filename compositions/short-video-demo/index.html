@@ -1,5 +1,16 @@
 <!doctype html>
-<html lang="zh-CN">
+<html
+  lang="zh-CN"
+  data-composition-variables='[
+    {"id":"badge","type":"string","label":"Badge 顶标","default":"影刀 × HyperFrames"},
+    {"id":"eyebrow","type":"string","label":"Eyebrow 小标签","default":"第 1 圈飞轮"},
+    {"id":"title1","type":"string","label":"标题第一行","default":"HTML"},
+    {"id":"title2","type":"string","label":"标题第二行(强调)","default":"即视频源"},
+    {"id":"desc","type":"string","label":"描述文案","default":"data-* 控时间线 · GSAP 控动画 · npx hyperframes render 出 mp4"},
+    {"id":"cta","type":"string","label":"CTA 按钮文字","default":"下一圈接 ScriptJson"},
+    {"id":"accent","type":"color","label":"主色调","default":"#7c3aed"}
+  ]'
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1080, height=1920" />
@@ -28,7 +39,6 @@
         overflow: hidden;
       }
 
-      /* 装饰 — 右上紫色光晕 */
       .glow {
         position: absolute;
         top: -200px;
@@ -39,8 +49,6 @@
         background: radial-gradient(circle, rgba(124, 58, 237, 0.35) 0%, transparent 70%);
         pointer-events: none;
       }
-
-      /* 装饰 — 左下淡薰衣草色斑 */
       .glow-2 {
         position: absolute;
         bottom: -150px;
@@ -80,9 +88,9 @@
         width: 14px;
         height: 14px;
         border-radius: 50%;
-        background: #7c3aed;
+        background: var(--accent, #7c3aed);
       }
-      .badge .text {
+      .badge-text {
         font-size: 32px;
         color: #6d28d9;
         font-weight: 600;
@@ -91,7 +99,7 @@
 
       .eyebrow {
         font-size: 36px;
-        color: #7c3aed;
+        color: var(--accent, #7c3aed);
         font-weight: 600;
         letter-spacing: 0.18em;
         text-transform: uppercase;
@@ -106,7 +114,7 @@
         letter-spacing: -0.02em;
       }
       .title .accent {
-        background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+        background: linear-gradient(135deg, var(--accent, #7c3aed) 0%, #a78bfa 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -119,20 +127,12 @@
         max-width: 880px;
         font-weight: 400;
       }
-      .desc .kbd {
-        font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
-        background: rgba(124, 58, 237, 0.1);
-        padding: 4px 14px;
-        border-radius: 8px;
-        font-size: 34px;
-        color: #5b21b6;
-      }
 
       .pill {
         display: inline-flex;
         align-items: center;
         gap: 18px;
-        background: #7c3aed;
+        background: var(--accent, #7c3aed);
         color: white;
         padding: 32px 64px;
         border-radius: 100px;
@@ -154,11 +154,9 @@
       data-width="1080"
       data-height="1920"
     >
-      <!-- 装饰图层 — 不放 clip,只是背景 -->
       <div class="glow"></div>
       <div class="glow-2"></div>
 
-      <!-- 主 clip:整个 5s 演示 -->
       <div
         id="main-clip"
         class="scene-content clip"
@@ -168,52 +166,68 @@
       >
         <div class="badge">
           <span class="dot"></span>
-          <span class="text">影刀 × HyperFrames</span>
+          <span class="badge-text" id="v-badge">影刀 × HyperFrames</span>
         </div>
 
-        <div class="eyebrow">第 1 圈飞轮</div>
+        <div class="eyebrow" id="v-eyebrow">第 1 圈飞轮</div>
 
         <h1 class="title">
-          <span>HTML</span>
+          <span id="v-title1">HTML</span>
           <br />
-          <span class="accent">即视频源</span>
+          <span class="accent" id="v-title2">即视频源</span>
         </h1>
 
-        <p class="desc">
-          <span class="kbd">data-*</span> 控时间线 ·
-          <span class="kbd">GSAP</span> 控动画 ·
-          <span class="kbd">npx hyperframes render</span> 出 mp4
+        <p class="desc" id="v-desc">
+          data-* 控时间线 · GSAP 控动画 · npx hyperframes render 出 mp4
         </p>
 
         <div class="pill">
-          <span>下一圈接 ScriptJson</span>
+          <span id="v-cta">下一圈接 ScriptJson</span>
           <span class="arrow">→</span>
         </div>
       </div>
     </div>
 
     <script>
+      // 读取 variables 注入文案 + 主色;__hyperframes 在某些环境(如 validate)未注入,降级到 HTML 占位文字
+      try {
+        const vars = window.__hyperframes && window.__hyperframes.getVariables();
+        if (vars) {
+          const setText = (id, v) => {
+            if (v != null) document.getElementById(id).textContent = v;
+          };
+          setText("v-badge", vars.badge);
+          setText("v-eyebrow", vars.eyebrow);
+          setText("v-title1", vars.title1);
+          setText("v-title2", vars.title2);
+          setText("v-desc", vars.desc);
+          setText("v-cta", vars.cta);
+          if (vars.accent) {
+            document.documentElement.style.setProperty("--accent", vars.accent);
+          }
+        }
+      } catch (e) {
+        console.warn("hyperframes variables unavailable, using HTML defaults:", e);
+      }
+
+      // GSAP 时间线
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
 
-      // 装饰图层 — 缓慢生长(背景不在 clip 内,GSAP 仍然能动它们)
       tl.from(".glow", { scale: 0.6, opacity: 0, duration: 1.2, ease: "power2.out" }, 0);
       tl.from(".glow-2", { scale: 0.6, opacity: 0, duration: 1.4, ease: "power2.out" }, 0.2);
 
-      // 入场 stagger
       tl.from(".badge", { y: -40, opacity: 0, duration: 0.6, ease: "power3.out" }, 0.2);
       tl.from(".eyebrow", { x: -30, opacity: 0, duration: 0.5, ease: "power2.out" }, 0.5);
-      tl.from(".title span:first-child", { y: 80, opacity: 0, duration: 0.7, ease: "expo.out" }, 0.7);
+      tl.from(".title #v-title1", { y: 80, opacity: 0, duration: 0.7, ease: "expo.out" }, 0.7);
       tl.from(".title .accent", { y: 60, opacity: 0, duration: 0.7, ease: "expo.out" }, 0.9);
       tl.from(".desc", { y: 40, opacity: 0, duration: 0.6, ease: "power2.out" }, 1.2);
       tl.from(".pill", { scale: 0.7, opacity: 0, duration: 0.7, ease: "back.out(1.6)" }, 1.6);
       tl.from(".pill .arrow", { x: -20, opacity: 0, duration: 0.4, ease: "power2.out" }, 1.9);
 
-      // 持续运动 — pill 轻微浮动
       tl.to(".pill", { y: -10, duration: 1.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.3);
 
-      // 最终淡出(单 scene composition,允许 final exit)
-      tl.to('#root', { opacity: 0, duration: 0.45, ease: "power2.in" }, 4.5);
+      tl.to("#root", { opacity: 0, duration: 0.45, ease: "power2.in" }, 4.5);
 
       window.__timelines["main"] = tl;
     </script>
