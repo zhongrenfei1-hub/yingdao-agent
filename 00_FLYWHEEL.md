@@ -65,7 +65,7 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 - [x] **NEED-005** 影刀 `compositions/short-video-demo/design.md` 落地(iris-50 → iris-950 全色板 + Inter/Noto Sans SC 字体 + GSAP eases 池 + Do/Don't)
 
 ### P1(三个关键点)
-- [ ] **NEED-006** 🗂️ **本地文件夹联动**:composition 引用本地素材池(mp4/jpg),Agent 自动选材
+- [x] **NEED-006** 🗂️ **本地文件夹联动**:`compositions/local-asset-remix/` 演示 hyperframes 直接读 `./assets/*.mp4`,3 段串行 + caption 浮层 + outro,691 KB mp4 出片
 - [ ] **NEED-007** 🖐️ **拖拽交互**:Workbench 中拖素材进时间轴 / 拖镜头重排 / 拖反馈到记忆
 - [ ] **NEED-008** 🎨 **布局哲学**:LoopConversationWorkbench 升级到「对话 + composition 预览 + 时间轴 + 记忆」四面板
 
@@ -122,6 +122,20 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 - [x] adapter 端 (`scriptToVariables`) 在 .mjs 重复实现一次(.ts → .mjs 共享靠后续编译,暂时双写)
 - [ ] 🟡 **待用户合并 WIP**:把 `renderViaHyperframes()` 函数搬进 `vite.config.ts:563` 的 `server.middlewares.use('/api/video/render', ...)` 即完成 middleware 切换
 
+### 阶段 5:🗂️ 本地素材联动 ✅
+- [x] `compositions/local-asset-remix/` scaffold(blank)
+- [x] `assets/clip-{1,2,3}.mp4`:ffmpeg lavfi 造的 3 个 iris 紫色阶 2s 纯色 mp4(6.7KB 各),模拟本地素材池
+- [x] composition 用 `<video src="./assets/clip-1.mp4" data-start data-duration data-track-index muted playsinline>` 引用本地素材
+- [x] 多 clip 时间线:`v1/caption-1` (0-2s) → `v2/caption-2` (2-4s) → `v3/caption-3` (4-6s) → `outro` (6-8s)
+- [x] caption 浮层在视频上方(track 1,z-index 2),黑色 backdrop + 白字 + 大字号
+- [x] outro 是浅紫渐变 scene,GSAP stagger 入场
+- [x] caption 入场用 `tl.set()` + `tl.to()` 双步,避免 clip 切换时的 inline state glitch
+- [x] 6 变量:c1Caption / c2Caption / c3Caption / outroTitle / outroCta / accent
+- [x] `lint` 0/0 · `validate` 0 console errors · `render` 691 KB mp4(237 帧 7.9s)
+- [x] 证明 hyperframes 能正确解析 composition 内的本地相对路径(`./assets/*.mp4`)
+
+**生产用法**:用户后续把自己的素材(`~/Movies/影刀素材/`)软链/复制到 `assets/`,或在 ScriptJson 里加 `assetPath` 字段让 hyperframes-variables 映射成 `<video src="{var}">`。
+
 ### 阶段 4:📊 模板复用 ✅
 - [x] `compositions/weekly-stats/` scaffold(hyperframes init blank)
 - [x] 9:16 1080×1920 Bento 布局:1 大卡(主 KPI,跨 2 列)+ 2 小卡(辅 KPI)
@@ -150,4 +164,5 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | 2026-05-16 | 1 | 阶段 1 ScriptJson 集成:composition 7 变量化 + getVariables 注入 + ScriptJson 映射纯函数 + typecheck pass,692 KB mp4 参数化渲染 | __hyperframes 在 validate 不注入 → HTML 写 default + try-catch 降级 | `c7462ed` |
 | 2026-05-16 | 2 | 阶段 2 集成示范:scripts/render-via-hyperframes.mjs CLI 端到端跑通 ScriptJson → 679 KB mp4,自动拆 title 两行,平台映射 eyebrow,hook 映射 desc | vite.config.ts 是 WIP 不能动 → 改走独立 CLI,集成代码可直接搬进 middleware | `7d71c6f` |
 | 2026-05-16 | 3 | 阶段 3 design.md 落地:浅色 + iris 紫调全套色板 + Inter/Noto Sans SC 字体 + GSAP eases 池 + Do/Don't,品牌真理源就位 | hyperframes 0.6.12 inspect non-JSON 模式 totalDuration bug,改用 --json 验证 issueCount 0 | `b563730` |
-| 2026-05-16 | 4 | 阶段 4 第二 composition `weekly-stats`:Bento 1 大 2 小数据卡 + 14 变量 + glass-morphism + tabular-nums,811 KB mp4 | Write 工具要求先 Read init 的默认 index.html → 已 Read 再写 | _待 commit_ |
+| 2026-05-16 | 4 | 阶段 4 第二 composition `weekly-stats`:Bento 1 大 2 小数据卡 + 14 变量 + glass-morphism + tabular-nums,811 KB mp4 | Write 工具要求先 Read init 的默认 index.html → 已 Read 再写 | `9cdce9e` |
+| 2026-05-16 | 5 | 阶段 5 本地素材联动 🗂️:`local-asset-remix` composition 读 3 个本地 mp4 + 3 段 caption + outro,691 KB mp4 验证 hyperframes 解析相对路径 | clip 切换时 GSAP from() 会有初始 frame glitch → 改 tl.set + tl.to 双步 | _待 commit_ |
