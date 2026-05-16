@@ -61,7 +61,7 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 - [x] **NEED-001** hyperframes@0.6.12 装到 yingdao-agent(devDep)
 - [x] **NEED-002** 第一个 composition demo(9:16 1080×1920)跑通 `lint`(0 err/warn)+ `validate`(0 console err)+ `render`(617 KB mp4 / 45.9s 渲染 / 5.3s 视频)
 - [x] **NEED-003** `ScriptJson` → composition variables 映射(`src/adapters/hyperframes-variables.ts`,纯函数双端可用,typecheck pass)
-- [ ] **NEED-004** `/api/video/render` middleware 替换 ffmpeg,改走 `spawn npx hyperframes render`
+- [x] **NEED-004 (part)** `scripts/render-via-hyperframes.mjs` 独立 CLI 跑通 ScriptJson → mp4(集成示范,等用户合并 WIP 后搬进 `vite.config.ts` 的 `videoRenderApiPlugin`)
 - [ ] **NEED-005** 影刀 `design.md` 落地(浅色 + 紫色调,贴用户审美)
 
 ### P1(三个关键点)
@@ -82,7 +82,7 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 |---|---|---|---|
 | **阶段 0** | 🏗️ hyperframes 基建 | 装包 + 第一个 demo composition 跑通 render | ✅ |
 | **阶段 1** | 🔌 ScriptJson 集成 | hyperframes-adapter + composition variables 化 | ✅ |
-| **阶段 2** | 🔄 middleware 切换 | `/api/video/render` 改走 hyperframes,ffmpeg 路径降级 | ☐ |
+| **阶段 2** | 🔄 集成示范 | 独立 CLI 跑通 ScriptJson → mp4(避开 WIP) | 🟡 集成代码 ready,待用户合并 WIP 后接 middleware |
 | **阶段 3** | 🎨 design.md 落地 | 浅紫调一致,Workbench 美学统一 | ☐ |
 | **阶段 4** | 🗂️ 本地素材联动 | composition 读本地素材池 | ☐ |
 | **阶段 5** | 🖐️ 拖拽交互 | 素材/镜头/反馈拖入 Workbench | ☐ |
@@ -113,11 +113,19 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 - [x] `npx hyperframes render --variables '{"badge":"...","title1":"..."}'` 跑通,**692 KB mp4**,30s 渲染
 - [x] 两份 mp4 对比(默认 vs 参数):大小不同证明变量真生效
 
-### 阶段 2:🔄 middleware 切换(下一圈)
-- [ ] `src/adapters/hyperframes-renderer.ts`:Node-side `spawn npx hyperframes render` 封装(返回 VideoRenderResult)
-- [ ] vite.config.ts:`/api/video/render` middleware 改走 hyperframes-renderer,ffmpeg 路径作为降级
-- [ ] 修改 `video-renderer.ts` 接口对齐(若需要)
-- [ ] 端到端测试:从 React Workbench 触发 → 输出真带文字的 mp4
+### 阶段 2:🔄 集成示范 🟡
+**为何不直接动 `vite.config.ts`?** 它是用户 WIP(M 状态),飞轮约束"不动 WIP"。退路是写独立脚本演示集成路径,等用户合并后再把代码搬进 middleware。
+
+- [x] `scripts/render-via-hyperframes.mjs`:独立 CLI,接受 `<script.json>` 或 stdin,输出 mp4 + `VideoRenderResult` JSON 到 stdout
+- [x] `scripts/sample-script.json`:示范 ScriptJson(带 title / hook / platform / cta / scenes / risks)
+- [x] 端到端跑通:`node scripts/render-via-hyperframes.mjs scripts/sample-script.json` → 真 mp4 输出
+- [x] adapter 端 (`scriptToVariables`) 在 .mjs 重复实现一次(.ts → .mjs 共享靠后续编译,暂时双写)
+- [ ] 🟡 **待用户合并 WIP**:把 `renderViaHyperframes()` 函数搬进 `vite.config.ts:563` 的 `server.middlewares.use('/api/video/render', ...)` 即完成 middleware 切换
+
+### 阶段 3:🎨 design.md 落地(下一圈)
+- [ ] `compositions/short-video-demo/design.md`:浅色 + iris 紫调色板 + 字体规范 + GSAP 默认 eases
+- [ ] composition 复读 design.md 验证一致
+- [ ] 第二个 composition(数据流风格)作为多模板基础
 
 ---
 
@@ -126,4 +134,5 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | 日期 | 圈数 | 完成 | 失败 / 待修 | Commit |
 |---|---|---|---|---|
 | 2026-05-16 | 0 | 影刀飞轮宪章落地 + 阶段 0 hyperframes 基建:scaffold + composition 重写 + lint/validate/render 三件套跑通,617 KB mp4 出片 | PingFang SC 字体无 mapping → 改 Inter+Noto Sans SC | `32ab00c` |
-| 2026-05-16 | 1 | 阶段 1 ScriptJson 集成:composition 7 变量化 + getVariables 注入 + ScriptJson 映射纯函数 + typecheck pass,692 KB mp4 参数化渲染 | __hyperframes 在 validate 不注入 → HTML 写 default + try-catch 降级 | _待 commit_ |
+| 2026-05-16 | 1 | 阶段 1 ScriptJson 集成:composition 7 变量化 + getVariables 注入 + ScriptJson 映射纯函数 + typecheck pass,692 KB mp4 参数化渲染 | __hyperframes 在 validate 不注入 → HTML 写 default + try-catch 降级 | `c7462ed` |
+| 2026-05-16 | 2 | 阶段 2 集成示范:scripts/render-via-hyperframes.mjs CLI 端到端跑通 ScriptJson → 679 KB mp4,自动拆 title 两行,平台映射 eyebrow,hook 映射 desc | vite.config.ts 是 WIP 不能动 → 改走独立 CLI,集成代码可直接搬进 middleware | _待 commit_ |

@@ -1,0 +1,12 @@
+{
+  "title": "AI Agent · 闭环治理",
+  "hook": "Cron 让 Agent 醒来,Workflow 让它执行,Centaur Loop 让它进化",
+  "platform": "Bilibili 演示",
+  "cta": "Star 我们的开源仓库",
+  "scenes": [
+    { "id": "s1", "duration": 2, "caption": "AI 自动策划与执行" },
+    { "id": "s2", "duration": 2, "caption": "人类在关键节点卡点" },
+    { "id": "s3", "duration": 1, "caption": "反馈沉淀为记忆,下一轮更聪明" }
+  ],
+  "risks": ["注意平台合规", "避免敏感关键词"]
+}
