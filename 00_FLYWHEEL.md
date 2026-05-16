@@ -122,6 +122,16 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 - [x] adapter 端 (`scriptToVariables`) 在 .mjs 重复实现一次(.ts → .mjs 共享靠后续编译,暂时双写)
 - [ ] 🟡 **待用户合并 WIP**:把 `renderViaHyperframes()` 函数搬进 `vite.config.ts:563` 的 `server.middlewares.use('/api/video/render', ...)` 即完成 middleware 切换
 
+### 阶段 4:📊 模板复用 ✅
+- [x] `compositions/weekly-stats/` scaffold(hyperframes init blank)
+- [x] 9:16 1080×1920 Bento 布局:1 大卡(主 KPI,跨 2 列)+ 2 小卡(辅 KPI)
+- [x] 14 个 variables:period / title / s{1,2,3}{Label,Value,Change} / verdict / cta / accent
+- [x] glass-morphism 卡片(白色 0.7 + backdrop-blur 20px)+ 主卡用紫渐变填充
+- [x] stat 数字用 `font-variant-numeric: tabular-nums` 对齐
+- [x] GSAP timeline:glow → header → 主卡 → 副卡 stagger → footer,6s 时长
+- [x] 复用 design.md(从 short-video-demo 复制),验证跨 composition 品牌一致
+- [x] `lint` 0/0 + `validate` 0 console errors + `render` 811 KB mp4(186 帧 6.2s)
+
 ### 阶段 3:🎨 design.md 落地 ✅
 - [x] `compositions/short-video-demo/design.md`:Mood + Palette(iris-50→950 完整色板)+ Gradient + Typography(168/96/40/36/28px 阶梯)+ Corners + Spacing + Depth + Motion(eases 池 + 时长 + stagger)+ Do/Don't + 兼容性
 - [x] HyperFrames 自动读取此文件作为品牌真理源
@@ -139,4 +149,5 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | 2026-05-16 | 0 | 影刀飞轮宪章落地 + 阶段 0 hyperframes 基建:scaffold + composition 重写 + lint/validate/render 三件套跑通,617 KB mp4 出片 | PingFang SC 字体无 mapping → 改 Inter+Noto Sans SC | `32ab00c` |
 | 2026-05-16 | 1 | 阶段 1 ScriptJson 集成:composition 7 变量化 + getVariables 注入 + ScriptJson 映射纯函数 + typecheck pass,692 KB mp4 参数化渲染 | __hyperframes 在 validate 不注入 → HTML 写 default + try-catch 降级 | `c7462ed` |
 | 2026-05-16 | 2 | 阶段 2 集成示范:scripts/render-via-hyperframes.mjs CLI 端到端跑通 ScriptJson → 679 KB mp4,自动拆 title 两行,平台映射 eyebrow,hook 映射 desc | vite.config.ts 是 WIP 不能动 → 改走独立 CLI,集成代码可直接搬进 middleware | `7d71c6f` |
-| 2026-05-16 | 3 | 阶段 3 design.md 落地:浅色 + iris 紫调全套色板 + Inter/Noto Sans SC 字体 + GSAP eases 池 + Do/Don't,品牌真理源就位 | hyperframes 0.6.12 inspect non-JSON 模式 totalDuration bug,改用 --json 验证 issueCount 0 | _待 commit_ |
+| 2026-05-16 | 3 | 阶段 3 design.md 落地:浅色 + iris 紫调全套色板 + Inter/Noto Sans SC 字体 + GSAP eases 池 + Do/Don't,品牌真理源就位 | hyperframes 0.6.12 inspect non-JSON 模式 totalDuration bug,改用 --json 验证 issueCount 0 | `b563730` |
+| 2026-05-16 | 4 | 阶段 4 第二 composition `weekly-stats`:Bento 1 大 2 小数据卡 + 14 变量 + glass-morphism + tabular-nums,811 KB mp4 | Write 工具要求先 Read init 的默认 index.html → 已 Read 再写 | _待 commit_ |
