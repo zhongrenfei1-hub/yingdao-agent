@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f5f3ff;
+        font-family: "Inter", "Noto Sans SC", system-ui, sans-serif;
+      }
+
+      #root {
+        width: 1080px;
+        height: 1920px;
+        background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 45%, #ddd6fe 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* 装饰 — 右上紫色光晕 */
+      .glow {
+        position: absolute;
+        top: -200px;
+        right: -200px;
+        width: 700px;
+        height: 700px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(124, 58, 237, 0.35) 0%, transparent 70%);
+        pointer-events: none;
+      }
+
+      /* 装饰 — 左下淡薰衣草色斑 */
+      .glow-2 {
+        position: absolute;
+        bottom: -150px;
+        left: -150px;
+        width: 550px;
+        height: 550px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(167, 139, 250, 0.3) 0%, transparent 70%);
+        pointer-events: none;
+      }
+
+      .scene-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        width: 100%;
+        height: 100%;
+        padding: 200px 100px;
+        gap: 36px;
+        box-sizing: border-box;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(10px);
+        padding: 16px 32px;
+        border-radius: 60px;
+        border: 1px solid rgba(124, 58, 237, 0.15);
+      }
+      .badge .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #7c3aed;
+      }
+      .badge .text {
+        font-size: 32px;
+        color: #6d28d9;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+      }
+
+      .eyebrow {
+        font-size: 36px;
+        color: #7c3aed;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .title {
+        font-size: 168px;
+        color: #4c1d95;
+        font-weight: 800;
+        line-height: 1.02;
+        max-width: 900px;
+        letter-spacing: -0.02em;
+      }
+      .title .accent {
+        background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .desc {
+        font-size: 40px;
+        color: #5b21b6;
+        line-height: 1.5;
+        max-width: 880px;
+        font-weight: 400;
+      }
+      .desc .kbd {
+        font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+        background: rgba(124, 58, 237, 0.1);
+        padding: 4px 14px;
+        border-radius: 8px;
+        font-size: 34px;
+        color: #5b21b6;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        background: #7c3aed;
+        color: white;
+        padding: 32px 64px;
+        border-radius: 100px;
+        font-size: 48px;
+        font-weight: 600;
+        margin-top: 60px;
+        box-shadow: 0 20px 50px -15px rgba(124, 58, 237, 0.5);
+      }
+      .pill .arrow {
+        font-size: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- 装饰图层 — 不放 clip,只是背景 -->
+      <div class="glow"></div>
+      <div class="glow-2"></div>
+
+      <!-- 主 clip:整个 5s 演示 -->
+      <div
+        id="main-clip"
+        class="scene-content clip"
+        data-start="0"
+        data-duration="5"
+        data-track-index="0"
+      >
+        <div class="badge">
+          <span class="dot"></span>
+          <span class="text">影刀 × HyperFrames</span>
+        </div>
+
+        <div class="eyebrow">第 1 圈飞轮</div>
+
+        <h1 class="title">
+          <span>HTML</span>
+          <br />
+          <span class="accent">即视频源</span>
+        </h1>
+
+        <p class="desc">
+          <span class="kbd">data-*</span> 控时间线 ·
+          <span class="kbd">GSAP</span> 控动画 ·
+          <span class="kbd">npx hyperframes render</span> 出 mp4
+        </p>
+
+        <div class="pill">
+          <span>下一圈接 ScriptJson</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // 装饰图层 — 缓慢生长(背景不在 clip 内,GSAP 仍然能动它们)
+      tl.from(".glow", { scale: 0.6, opacity: 0, duration: 1.2, ease: "power2.out" }, 0);
+      tl.from(".glow-2", { scale: 0.6, opacity: 0, duration: 1.4, ease: "power2.out" }, 0.2);
+
+      // 入场 stagger
+      tl.from(".badge", { y: -40, opacity: 0, duration: 0.6, ease: "power3.out" }, 0.2);
+      tl.from(".eyebrow", { x: -30, opacity: 0, duration: 0.5, ease: "power2.out" }, 0.5);
+      tl.from(".title span:first-child", { y: 80, opacity: 0, duration: 0.7, ease: "expo.out" }, 0.7);
+      tl.from(".title .accent", { y: 60, opacity: 0, duration: 0.7, ease: "expo.out" }, 0.9);
+      tl.from(".desc", { y: 40, opacity: 0, duration: 0.6, ease: "power2.out" }, 1.2);
+      tl.from(".pill", { scale: 0.7, opacity: 0, duration: 0.7, ease: "back.out(1.6)" }, 1.6);
+      tl.from(".pill .arrow", { x: -20, opacity: 0, duration: 0.4, ease: "power2.out" }, 1.9);
+
+      // 持续运动 — pill 轻微浮动
+      tl.to(".pill", { y: -10, duration: 1.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.3);
+
+      // 最终淡出(单 scene composition,允许 final exit)
+      tl.to('#root', { opacity: 0, duration: 0.45, ease: "power2.in" }, 4.5);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
