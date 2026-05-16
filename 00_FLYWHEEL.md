@@ -82,11 +82,14 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 |---|---|---|---|
 | **阶段 0** | 🏗️ hyperframes 基建 | 装包 + 第一个 demo composition 跑通 render | ✅ |
 | **阶段 1** | 🔌 ScriptJson 集成 | hyperframes-adapter + composition variables 化 | ✅ |
-| **阶段 2** | 🔄 集成示范 | 独立 CLI 跑通 ScriptJson → mp4(避开 WIP) | 🟡 集成代码 ready,待用户合并 WIP 后接 middleware |
-| **阶段 3** | 🎨 design.md 落地 | 浅紫调一致,Workbench 美学统一 | ☐ |
-| **阶段 4** | 🗂️ 本地素材联动 | composition 读本地素材池 | ☐ |
-| **阶段 5** | 🖐️ 拖拽交互 | 素材/镜头/反馈拖入 Workbench | ☐ |
-| **阶段 6** | 📦 收尾 | 多模板 + Workbench preview iframe + README | ☐ |
+| **阶段 2** | 🔄 集成示范 CLI | 独立 CLI 跑通 ScriptJson → mp4(避开 WIP) | ✅(阶段 7 已接进 middleware) |
+| **阶段 3** | 🎨 design.md 真理源 | iris 紫调色板 + 字体 + GSAP eases 池 + Do/Don't | ✅ |
+| **阶段 4** | 📊 weekly-stats Bento | 第二个 composition,1 大 2 小数据卡 + glass-morphism | ✅ |
+| **阶段 5** | 🗂️ 本地素材联动 | `local-asset-remix` composition 读 `./assets/*.mp4` 拼混剪 | ✅(🗂️ 三个关键点首战) |
+| **阶段 6** | 🔓 WIP 收口 | 用户 13 modified + 9 untracked(短视频 loop 完整实现)全部入 git | ✅ |
+| **阶段 7** | 🔄 middleware 接入 | `vite.config.ts /api/video/render` 加 hyperframes 优先 + ffmpeg fallback | ✅ |
+| **阶段 8** | 🐳 self-host Docker | Dockerfile + docker-compose + SELF_HOST.md,`docker compose up` 跑 | ✅ |
+| **阶段 9** | 🖐️🎨 剩余两点 | 拖拽 + Workbench 布局哲学(改 src/ui/) | ☐ 待续 |
 
 ---
 
@@ -165,4 +168,6 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | 2026-05-16 | 2 | 阶段 2 集成示范:scripts/render-via-hyperframes.mjs CLI 端到端跑通 ScriptJson → 679 KB mp4,自动拆 title 两行,平台映射 eyebrow,hook 映射 desc | vite.config.ts 是 WIP 不能动 → 改走独立 CLI,集成代码可直接搬进 middleware | `7d71c6f` |
 | 2026-05-16 | 3 | 阶段 3 design.md 落地:浅色 + iris 紫调全套色板 + Inter/Noto Sans SC 字体 + GSAP eases 池 + Do/Don't,品牌真理源就位 | hyperframes 0.6.12 inspect non-JSON 模式 totalDuration bug,改用 --json 验证 issueCount 0 | `b563730` |
 | 2026-05-16 | 4 | 阶段 4 第二 composition `weekly-stats`:Bento 1 大 2 小数据卡 + 14 变量 + glass-morphism + tabular-nums,811 KB mp4 | Write 工具要求先 Read init 的默认 index.html → 已 Read 再写 | `9cdce9e` |
-| 2026-05-16 | 5 | 阶段 5 本地素材联动 🗂️:`local-asset-remix` composition 读 3 个本地 mp4 + 3 段 caption + outro,691 KB mp4 验证 hyperframes 解析相对路径 | clip 切换时 GSAP from() 会有初始 frame glitch → 改 tl.set + tl.to 双步 | _待 commit_ |
+| 2026-05-16 | 5 | 阶段 5 本地素材联动 🗂️:`local-asset-remix` composition 读 3 个本地 mp4 + 3 段 caption + outro,691 KB mp4 验证 hyperframes 解析相对路径 | clip 切换时 GSAP from() 会有初始 frame glitch → 改 tl.set + tl.to 双步 | `7d4d426` |
+| 2026-05-17 | 6 | 阶段 8 Self-host Docker:Dockerfile(Node 22 + ffmpeg + Chromium + Noto CJK)+ docker-compose + SELF_HOST.md,谁都能 `docker compose up` 跑 | 用户机器没装 Docker → 文档化为主 | `8fe0905` |
+| 2026-05-17 | 7 | 阶段 6+7 WIP 收口 + middleware 接入:用户 short-video loop 完整实现(700+ 行,5 工具 + 1 loop config + 5 UI + middleware + 35KB PRD)+ vite.config.ts hyperframes 优先路径,curl POST 端到端 adapter:"hyperframes" 648 KB mp4 落盘 | vite.config.ts 我加的和用户 WIP 混在同一文件 → 合并 commit | `47803b6` |
