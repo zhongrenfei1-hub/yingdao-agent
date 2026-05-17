@@ -9,6 +9,7 @@ import { LoopChatController } from '../protocol/loopChat';
 import type { LoopChatSession, UserAction } from '../protocol/types';
 import type { RuntimeState } from '../hooks/useRuntimeStatus';
 import ChatBubble from './ChatBubble';
+import VideoPreviewPanel from './VideoPreviewPanel';
 
 interface LoopConversationWorkbenchProps {
   runtime: RuntimeState;
@@ -167,7 +168,7 @@ export default function LoopConversationWorkbench({ runtime }: LoopConversationW
   if (!config) return null;
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px_280px]">
       <main className="min-w-0 rounded-2xl border border-border-cream bg-white/65 backdrop-blur-sm">
         <div className="flex flex-col gap-3 border-b border-border-cream px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -240,9 +241,19 @@ export default function LoopConversationWorkbench({ runtime }: LoopConversationW
         </div>
       </main>
 
+      {/* 中列:composition 预览(xl 屏才显示,小屏堆到底部) */}
+      <aside className="space-y-4 hidden xl:block">
+        <VideoPreviewPanel />
+      </aside>
+
+      {/* 右列:loop 进度 + 记忆 */}
       <aside className="space-y-4">
         <CycleMap configId={activeConfigId} />
         <MemoryShelf employeeId={config.employeeId} />
+        {/* lg 屏(无中列时)在右侧加上 video preview */}
+        <div className="xl:hidden">
+          <VideoPreviewPanel />
+        </div>
       </aside>
     </div>
   );
