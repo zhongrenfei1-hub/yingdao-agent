@@ -91,6 +91,7 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | **阶段 8** | 🐳 self-host Docker | Dockerfile + docker-compose + SELF_HOST.md,`docker compose up` 跑 | ✅ |
 | **阶段 9** | 🖐️🎨 剩余两点 | 拖拽 + Workbench 布局哲学(改 src/ui/) | ✅(已合入 stage-10/11) |
 | **阶段 15** | 📦 一键发布包 | `short-video-publish-packager` 端到端落地:多平台结构化 JSON + 合规清单 + 24h 观察项 + PublishPackPanel UI + 一键复制 | ✅ |
+| **阶段 16** | 🚀 快速制作工作台 | 跟 Loop chat-first 并列的"快速制作"tab:输入 → 4 步串行(脚本/AI 提示词/混剪/发布包)→ 视频+发布包产出,跳过 cycle 抽象 | ✅ |
 
 ---
 
@@ -173,3 +174,4 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | 2026-05-17 | 6 | 阶段 8 Self-host Docker:Dockerfile(Node 22 + ffmpeg + Chromium + Noto CJK)+ docker-compose + SELF_HOST.md,谁都能 `docker compose up` 跑 | 用户机器没装 Docker → 文档化为主 | `8fe0905` |
 | 2026-05-17 | 7 | 阶段 6+7 WIP 收口 + middleware 接入:用户 short-video loop 完整实现(700+ 行,5 工具 + 1 loop config + 5 UI + middleware + 35KB PRD)+ vite.config.ts hyperframes 优先路径,curl POST 端到端 adapter:"hyperframes" 648 KB mp4 落盘 | vite.config.ts 我加的和用户 WIP 混在同一文件 → 合并 commit | `47803b6` |
 | 2026-05-18 | 15 | 阶段 15 一键发布包:`short-video-publish-packager` 端到端落地 — `core/publishPack.ts` 类型+ parse + serialize + formatPlatformCopy;`loopExecutor` 特例分支 + JSON schema 提示词;`ai-client` demo mock(抖音/TikTok/小红书 3 平台 + 6 项合规 + 6 项 24h 指标);`PublishPackPanel.tsx` 平台 tab + 标题/正文/标签/AB 变体逐项复制;`LoopDraftCard` artifact 分发。`tsc --noEmit` ✓,`vite build` 259 KB ✓,parse roundtrip + fenced 容错 + 坏输入兜底 3 case 全过 | preview 工具因 worktree 路径限制不可用,改用 typecheck + build + node tsx 单元逻辑覆盖;真"无人值守"自动发布(平台 API/RPA)留 stage-16 | `6a0a586` |
+| 2026-05-18 | 16 | 阶段 16 快速制作工作台(用户原话"先做制作内容的工作台"):跳过 Centaur Loop 的 cycle/plan-review/awaiting_* 抽象,直接面向"我要做内容"。`core/quickMake.ts` 串行 runner:脚本(LLM JSON)→ AI 提示词(LLM 文本)→ 混剪(hyperframes via /api/video/render)→ 发布包(LLM JSON,复用 stage-15)。`ui/QuickMakeWorkbench.tsx` 三列布局:左输入(选题/卖点/平台多选/视觉风格)+ 中 4 步进度卡(pending/running/done/error/skipped)+ 右产出(视频 + PublishPackPanel + AI 提示词折叠 + 脚本 JSON 折叠)。`App.tsx` 加 tab,默认进"快速制作"。`tsc --noEmit` ✓,`vite build` 282 KB / gzip 88 KB ✓ | preview 工具因 worktree 限制不可用,实际运行需 `npm run dev`(port 5180)。本地素材上传留下圈;`/api/video/render` middleware 依赖 dev server 才能工作 | (pending) |
