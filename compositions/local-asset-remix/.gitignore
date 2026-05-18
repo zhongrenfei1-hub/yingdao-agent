@@ -1,3 +1,6 @@
 # 构建产物
 renders/
 node_modules/
+
+# 用户运行时上传的素材(不入 git)
+assets/uploads/

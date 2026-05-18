@@ -2,6 +2,9 @@
 <html
   lang="zh-CN"
   data-composition-variables='[
+    {"id":"c1Url","type":"string","label":"第 1 段视频","default":"./assets/clip-1.mp4"},
+    {"id":"c2Url","type":"string","label":"第 2 段视频","default":"./assets/clip-2.mp4"},
+    {"id":"c3Url","type":"string","label":"第 3 段视频","default":"./assets/clip-3.mp4"},
     {"id":"c1Caption","type":"string","label":"第 1 段字幕","default":"开头 3 秒钩住眼球"},
     {"id":"c2Caption","type":"string","label":"第 2 段字幕","default":"中段 3-7 秒讲清楚为什么"},
     {"id":"c3Caption","type":"string","label":"第 3 段字幕","default":"最后召唤行动"},
@@ -259,6 +262,15 @@
           const setText = (id, v) => {
             if (v != null) document.getElementById(id).textContent = v;
           };
+          const setSrc = (id, v) => {
+            if (v != null && v !== "") {
+              const el = document.getElementById(id);
+              if (el) el.src = v;
+            }
+          };
+          setSrc("v1", vars.c1Url);
+          setSrc("v2", vars.c2Url);
+          setSrc("v3", vars.c3Url);
           setText("v-c1", vars.c1Caption);
           setText("v-c2", vars.c2Caption);
           setText("v-c3", vars.c3Caption);

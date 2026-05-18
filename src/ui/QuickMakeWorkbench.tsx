@@ -1,12 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Check,
   CircleDashed,
+  FileVideo,
   Loader2,
   Play,
   Rocket,
   Sparkles,
   TriangleAlert,
+  Upload,
+  X,
   XCircle,
 } from 'lucide-react';
 import {
@@ -18,13 +21,25 @@ import {
   type QuickStepId,
   type QuickStepState,
 } from '../core/quickMake';
+import { uploadAssets } from '../adapters/video-renderer';
 import PublishPackPanel from './PublishPackPanel';
+
+interface LocalAsset {
+  file: File;
+  previewUrl: string;
+  kind: 'video' | 'image';
+}
+
+const MAX_ASSETS = 3;
+const ACCEPT_TYPES = 'video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/webp';
 
 export default function QuickMakeWorkbench() {
   const [topic, setTopic] = useState('');
   const [pitch, setPitch] = useState('');
   const [platforms, setPlatforms] = useState<string[]>(['抖音', '小红书']);
   const [visualStyle, setVisualStyle] = useState('');
+  const [assets, setAssets] = useState<LocalAsset[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [steps, setSteps] = useState(initialQuickSteps());
   const [artifacts, setArtifacts] = useState<QuickMakeArtifacts>({});
   const [running, setRunning] = useState(false);
@@ -33,6 +48,42 @@ export default function QuickMakeWorkbench() {
 
   const togglePlatform = useCallback((p: string) => {
     setPlatforms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
+  }, []);
+
+  const addAssets = useCallback((files: File[]) => {
+    setUploadError(null);
+    setAssets((cur) => {
+      const remaining = MAX_ASSETS - cur.length;
+      if (remaining <= 0) {
+        setUploadError(`最多 ${MAX_ASSETS} 个素材,请先删除再加`);
+        return cur;
+      }
+      const accepted: LocalAsset[] = [];
+      for (const f of files.slice(0, remaining)) {
+        const isVideo = f.type.startsWith('video/');
+        const isImage = f.type.startsWith('image/');
+        if (!isVideo && !isImage) continue;
+        if (f.size > 50 * 1024 * 1024) {
+          setUploadError(`${f.name} 超过 50MB`);
+          continue;
+        }
+        accepted.push({
+          file: f,
+          previewUrl: URL.createObjectURL(f),
+          kind: isVideo ? 'video' : 'image',
+        });
+      }
+      return [...cur, ...accepted];
+    });
+  }, []);
+
+  const removeAsset = useCallback((idx: number) => {
+    setAssets((cur) => {
+      const next = cur.filter((_, i) => i !== idx);
+      const removed = cur[idx];
+      if (removed) URL.revokeObjectURL(removed.previewUrl);
+      return next;
+    });
   }, []);
 
   const reset = useCallback(() => {
@@ -44,19 +95,36 @@ export default function QuickMakeWorkbench() {
     if (!canRun || running) return;
     setRunning(true);
     reset();
+    let assetPaths: string[] | undefined;
     try {
+      if (assets.length > 0) {
+        const uploaded = await uploadAssets(assets.map((a) => a.file));
+        assetPaths = uploaded.paths;
+        if (uploaded.warnings?.length) {
+          setUploadError(uploaded.warnings.join(' · '));
+        }
+      }
       await runQuickMake(
-        { topic: topic.trim(), pitch: pitch.trim(), platforms, visualStyle: visualStyle.trim() || undefined },
+        {
+          topic: topic.trim(),
+          pitch: pitch.trim(),
+          platforms,
+          visualStyle: visualStyle.trim() || undefined,
+          assetPaths,
+        },
         {
           onStep: (id, patch) =>
             setSteps((cur) => ({ ...cur, [id]: { ...cur[id], ...patch } })),
           onArtifacts: (patch) => setArtifacts((cur) => ({ ...cur, ...patch })),
         },
       );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setUploadError(msg);
     } finally {
       setRunning(false);
     }
-  }, [canRun, running, reset, topic, pitch, platforms, visualStyle]);
+  }, [canRun, running, reset, assets, topic, pitch, platforms, visualStyle]);
 
   const finishedCount = useMemo(
     () => QUICK_STEP_ORDER.filter((id) => steps[id].status === 'done').length,
@@ -74,6 +142,10 @@ export default function QuickMakeWorkbench() {
         togglePlatform={togglePlatform}
         visualStyle={visualStyle}
         setVisualStyle={setVisualStyle}
+        assets={assets}
+        addAssets={addAssets}
+        removeAsset={removeAsset}
+        uploadError={uploadError}
         canRun={canRun}
         running={running}
         onGo={go}
@@ -93,6 +165,10 @@ function InputColumn({
   togglePlatform,
   visualStyle,
   setVisualStyle,
+  assets,
+  addAssets,
+  removeAsset,
+  uploadError,
   canRun,
   running,
   onGo,
@@ -105,6 +181,10 @@ function InputColumn({
   togglePlatform: (p: string) => void;
   visualStyle: string;
   setVisualStyle: (v: string) => void;
+  assets: LocalAsset[];
+  addAssets: (files: File[]) => void;
+  removeAsset: (idx: number) => void;
+  uploadError: string | null;
   canRun: boolean;
   running: boolean;
   onGo: () => void;
@@ -174,6 +254,14 @@ function InputColumn({
         />
       </Field>
 
+      <AssetUploader
+        assets={assets}
+        onAdd={addAssets}
+        onRemove={removeAsset}
+        disabled={running}
+        error={uploadError}
+      />
+
       <button
         type="button"
         onClick={onGo}
@@ -186,9 +274,138 @@ function InputColumn({
 
       <p className="text-[11px] leading-5 text-stone-gray">
         4 步串行:写脚本 → AI 提示词 → 本地混剪出片 → 多平台发布包。
-        视频走影刀本地 hyperframes pipeline,发布包走 LLM 结构化输出。
+        传素材就用你的,不传走 demo 模板。
       </p>
     </section>
+  );
+}
+
+function AssetUploader({
+  assets,
+  onAdd,
+  onRemove,
+  disabled,
+  error,
+}: {
+  assets: LocalAsset[];
+  onAdd: (files: File[]) => void;
+  onRemove: (idx: number) => void;
+  disabled: boolean;
+  error: string | null;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    onAdd(Array.from(files));
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
+  const slots = assets.length;
+  const remaining = MAX_ASSETS - slots;
+  const captionHint = remaining > 0
+    ? `还能加 ${remaining} 个 · 当前 ${slots}/${MAX_ASSETS}`
+    : `已满 · ${MAX_ASSETS}/${MAX_ASSETS}`;
+
+  return (
+    <div>
+      <p className="mb-1 flex items-center gap-1 text-overline">
+        本地素材(可选)
+        <span className="ml-1 text-[10px] font-normal text-stone-gray">{captionHint}</span>
+      </p>
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!disabled && remaining > 0) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          if (disabled || remaining <= 0) return;
+          handleFiles(e.dataTransfer.files);
+        }}
+        className={`rounded-xl border-2 border-dashed p-3 text-center transition ${
+          dragging
+            ? 'border-terracotta bg-terracotta/5'
+            : 'border-border-cream bg-white/50'
+        } ${disabled || remaining <= 0 ? 'opacity-60' : ''}`}
+      >
+        <button
+          type="button"
+          disabled={disabled || remaining <= 0}
+          onClick={() => inputRef.current?.click()}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-warm-sand/60 px-3 py-1.5 text-xs text-olive-gray hover:bg-warm-sand disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Upload size={12} />
+          选文件 / 拖进来
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPT_TYPES}
+          multiple
+          hidden
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+        <p className="mt-1.5 text-[10px] text-stone-gray">
+          mp4 / webm / mov / jpg / png · 单文件 ≤ 50MB · 最多 {MAX_ASSETS} 个
+        </p>
+      </div>
+
+      {assets.length > 0 && (
+        <ul className="mt-2 space-y-1.5">
+          {assets.map((a, i) => (
+            <li
+              key={i}
+              className="flex items-center gap-2 rounded-lg border border-border-cream bg-white/70 p-1.5"
+            >
+              <AssetThumb asset={a} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs text-near-black">{a.file.name}</p>
+                <p className="text-[10px] text-stone-gray">
+                  {a.kind === 'video' ? '🎬' : '🖼️'} {(a.file.size / 1024 / 1024).toFixed(1)} MB · 槽位 {i + 1}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                disabled={disabled}
+                className="rounded p-1 text-stone-gray hover:bg-terracotta/10 hover:text-terracotta disabled:opacity-40"
+              >
+                <X size={12} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {error && (
+        <p className="mt-1.5 flex items-start gap-1 text-[11px] leading-5 text-terracotta">
+          <TriangleAlert size={11} className="mt-0.5 shrink-0" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function AssetThumb({ asset }: { asset: LocalAsset }) {
+  if (asset.kind === 'video') {
+    return (
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-near-black/80 text-white">
+        <FileVideo size={14} />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={asset.previewUrl}
+      alt=""
+      className="h-10 w-10 shrink-0 rounded-md object-cover"
+    />
   );
 }
 

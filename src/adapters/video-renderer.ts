@@ -33,6 +33,26 @@ export interface VideoRenderInput {
   taskId: string;
   /** 上游 short-video-script-writer 输出的 JSON 脚本，缺省时 middleware 用默认 3-5-4 分段 */
   script?: ScriptJson;
+  /** 已上传到 /api/assets/upload 的素材相对路径(相对 local-asset-remix composition);
+   *  非空时 middleware 会切到 local-asset-remix composition 使用用户素材 */
+  assetPaths?: string[];
+}
+
+export interface AssetUploadResult {
+  sid: string;
+  paths: string[];
+  warnings?: string[];
+}
+
+export async function uploadAssets(files: File[]): Promise<AssetUploadResult> {
+  const form = new FormData();
+  for (const f of files) form.append('files', f, f.name);
+  const response = await fetch('/api/assets/upload', { method: 'POST', body: form });
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`上传失败 (${response.status})${text ? `:${text}` : ''}`);
+  }
+  return (await response.json()) as AssetUploadResult;
 }
 
 export interface VideoRenderResult {
@@ -49,7 +69,12 @@ export async function renderDemoRemixVideo(input: VideoRenderInput): Promise<Vid
   const response = await fetch('/api/video/render', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      cycleId: input.cycleId,
+      taskId: input.taskId,
+      script: input.script,
+      assetPaths: input.assetPaths,
+    }),
   });
 
   if (!response.ok) {

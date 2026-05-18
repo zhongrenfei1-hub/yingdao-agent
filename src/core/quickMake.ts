@@ -30,6 +30,8 @@ export interface QuickMakeInput {
   pitch: string;
   platforms: string[];
   visualStyle?: string;
+  /** 已上传的本地素材相对路径(由 uploadAssets 拿到),非空时混剪走 local-asset-remix composition */
+  assetPaths?: string[];
 }
 
 export interface QuickMakeArtifacts {
@@ -196,12 +198,16 @@ export async function runQuickMake(
       cycleId,
       taskId: taskId(),
       script: artifacts.scriptJson,
+      assetPaths: input.assetPaths,
     });
     artifacts.videoResult = result;
     cb.onArtifacts({ videoResult: result });
+    const note = input.assetPaths?.length
+      ? ` · ${input.assetPaths.length} 个本地素材`
+      : '';
     cb.onStep('remix', {
       status: 'done',
-      output: `${result.adapter} · ${result.durationSeconds}s · ${result.outputPath}`,
+      output: `${result.adapter} · ${result.durationSeconds}s${note} · ${result.outputPath}`,
       finishedAt: new Date().toISOString(),
     });
   } catch (e) {

@@ -2,7 +2,8 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { spawn } from 'node:child_process';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
+import Busboy from 'busboy';
 
 function readRequestBody(req: import('http').IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -517,7 +518,9 @@ interface ScriptInput {
 //   ffmpeg 残留作用:hyperframes 完成后用 runFfmpeg 抽帧做封面
 
 const HF_VERSION = '0.6.12';
-const HF_COMPOSITION = path.resolve(__dirname, 'compositions/short-video-pitch');
+const HF_PITCH_COMPOSITION = path.resolve(__dirname, 'compositions/short-video-pitch');
+const HF_REMIX_COMPOSITION = path.resolve(__dirname, 'compositions/local-asset-remix');
+const REMIX_ASSETS_UPLOADS = path.resolve(HF_REMIX_COMPOSITION, 'assets/uploads');
 
 function splitTitleTwoLines(title: string): [string, string] {
   const t = (title ?? '').trim();
@@ -581,12 +584,44 @@ function runHyperframes(args: string[], cwd: string): Promise<void> {
 
 async function renderViaHyperframes(
   script: ScriptInput | undefined,
+  assetPaths: string[] | undefined,
   outputDir: string,
   videoPath: string,
   posterPath: string,
-): Promise<void> {
-  const variables = scriptToHyperframesVariables(script);
+): Promise<{ composition: 'short-video-pitch' | 'local-asset-remix'; durationSeconds: number }> {
+  const useRemix = Array.isArray(assetPaths) && assetPaths.length > 0;
   await mkdir(outputDir, { recursive: true });
+
+  let variables: Record<string, string>;
+  let cwd: string;
+  let composition: 'short-video-pitch' | 'local-asset-remix';
+  let durationSeconds: number;
+
+  if (useRemix) {
+    composition = 'local-asset-remix';
+    cwd = HF_REMIX_COMPOSITION;
+    durationSeconds = 8;
+    const captions = scriptToRemixCaptions(script);
+    // 3 clip 槽位:用户传 < 3 则后面槽位 fallback 到 demo clip-N.mp4
+    const fallback = ['./assets/clip-1.mp4', './assets/clip-2.mp4', './assets/clip-3.mp4'];
+    variables = {
+      c1Url: assetPaths![0] ?? fallback[0],
+      c2Url: assetPaths![1] ?? fallback[1],
+      c3Url: assetPaths![2] ?? fallback[2],
+      c1Caption: captions[0],
+      c2Caption: captions[1],
+      c3Caption: captions[2],
+      outroTitle: captions[3],
+      outroCta: script?.cta ?? '等你审核 → 发布',
+      accent: '#7c3aed',
+    };
+  } else {
+    composition = 'short-video-pitch';
+    cwd = HF_PITCH_COMPOSITION;
+    durationSeconds = 5.3;
+    variables = scriptToHyperframesVariables(script);
+  }
+
   await runHyperframes(
     [
       '--yes',
@@ -596,9 +631,9 @@ async function renderViaHyperframes(
       '--output', videoPath,
       '--quality', 'draft',
     ],
-    HF_COMPOSITION,
+    cwd,
   );
-  // 抽 1 秒一帧做封面(复用 runFfmpeg)
+
   try {
     await runFfmpeg([
       '-y', '-ss', '00:00:01', '-i', videoPath,
@@ -607,6 +642,103 @@ async function renderViaHyperframes(
   } catch {
     /* 封面失败不阻塞,前端会用默认 poster */
   }
+
+  return { composition, durationSeconds };
+}
+
+function scriptToRemixCaptions(script: ScriptInput | undefined): [string, string, string, string] {
+  const scenes = script?.scenes ?? [];
+  return [
+    scenes[0]?.caption ?? script?.hook ?? '开头 3 秒钩住眼球',
+    scenes[1]?.caption ?? '中段讲清楚为什么',
+    scenes[2]?.caption ?? '最后召唤行动',
+    script?.title ?? '影刀 · 自动混剪完成',
+  ];
+}
+
+// 文件名安全化:只保留中英数 + . _ -,扩展名白名单
+const ASSET_EXT_WHITELIST = new Set(['.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png', '.webp']);
+function sanitizeFilename(name: string): string | null {
+  const ext = path.extname(name).toLowerCase();
+  if (!ASSET_EXT_WHITELIST.has(ext)) return null;
+  const stem = path
+    .basename(name, path.extname(name))
+    .replace(/[^\w一-龥\-]/g, '_')
+    .slice(0, 64);
+  if (!stem) return null;
+  return stem + ext;
+}
+
+function assetUploadApiPlugin(): Plugin {
+  return {
+    name: 'yingdao-asset-upload-api',
+    configureServer(server) {
+      server.middlewares.use('/api/assets/upload', (req, res) => {
+        if (req.method !== 'POST') {
+          sendJson(res, 405, { error: 'Method not allowed' });
+          return;
+        }
+        const contentType = req.headers['content-type'] ?? '';
+        if (!contentType.startsWith('multipart/form-data')) {
+          sendJson(res, 400, { error: 'Expected multipart/form-data' });
+          return;
+        }
+
+        const sid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        const sessionDir = path.join(REMIX_ASSETS_UPLOADS, sid);
+        const writes: Promise<void>[] = [];
+        const paths: string[] = [];
+        const errors: string[] = [];
+
+        const bb = Busboy({
+          headers: req.headers,
+          limits: { files: 6, fileSize: 50 * 1024 * 1024 },
+        });
+
+        bb.on('file', (_field, file, info) => {
+          const safe = sanitizeFilename(info.filename ?? '');
+          if (!safe) {
+            errors.push(`不支持的文件:${info.filename}`);
+            file.resume();
+            return;
+          }
+          const idx = paths.length;
+          const target = path.join(sessionDir, `${String(idx + 1).padStart(2, '0')}-${safe}`);
+          // 收集 chunks 后写入
+          const chunks: Buffer[] = [];
+          file.on('data', (c: Buffer) => chunks.push(c));
+          file.on('limit', () => errors.push(`${info.filename} 超过 50MB 限制`));
+          file.on('end', () => {
+            const buffer = Buffer.concat(chunks);
+            const writePromise = mkdir(sessionDir, { recursive: true })
+              .then(() => writeFile(target, buffer))
+              .then(() => {
+                paths.push(`./assets/uploads/${sid}/${path.basename(target)}`);
+              })
+              .catch((err) => {
+                errors.push(`写入失败:${err instanceof Error ? err.message : String(err)}`);
+              });
+            writes.push(writePromise);
+          });
+        });
+
+        bb.on('finish', async () => {
+          await Promise.all(writes);
+          if (paths.length === 0) {
+            sendJson(res, 400, { error: '未收到有效文件', detail: errors });
+            return;
+          }
+          sendJson(res, 200, { sid, paths, warnings: errors.length ? errors : undefined });
+        });
+
+        bb.on('error', (err) => {
+          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+        });
+
+        req.pipe(bb);
+      });
+    },
+  };
 }
 
 function videoRenderApiPlugin(): Plugin {
@@ -624,23 +756,27 @@ function videoRenderApiPlugin(): Plugin {
         }
 
         try {
-          // 从 request body 读 script(由上游 short-video-script-writer 输出)
           const body = await readRequestBody(req);
-          let parsed: { script?: ScriptInput } = {};
+          let parsed: { script?: ScriptInput; assetPaths?: string[] } = {};
           if (body.trim()) {
-            try { parsed = JSON.parse(body) as typeof parsed; } catch { /* 用空 script,走 default */ }
+            try { parsed = JSON.parse(body) as typeof parsed; } catch { /* fall through */ }
           }
 
-          // 唯一路径:hyperframes 渲染。失败直接 500,不再静默降级到 ffmpeg 丑色块。
           try {
-            await renderViaHyperframes(parsed.script, outputDir, videoPath, posterPath);
+            const result = await renderViaHyperframes(
+              parsed.script,
+              parsed.assetPaths,
+              outputDir,
+              videoPath,
+              posterPath,
+            );
             sendJson(res, 200, {
               videoUrl: `/generated/yingdao-auto-remix-demo.mp4?t=${Date.now()}`,
               posterUrl: `/generated/yingdao-auto-remix-demo.jpg?t=${Date.now()}`,
               outputPath: videoPath,
               adapter: 'hyperframes',
-              durationSeconds: 5.3,
-              composition: 'short-video-demo',
+              durationSeconds: result.durationSeconds,
+              composition: result.composition,
             });
             return;
           } catch (err) {
@@ -649,7 +785,7 @@ function videoRenderApiPlugin(): Plugin {
             sendJson(res, 500, {
               error: 'hyperframes 渲染失败',
               detail: msg,
-              hint: '首次启动需 1-2 分钟拉 Chrome;或确认 compositions/short-video-demo/ 存在且 lint 通过',
+              hint: '首次启动需 1-2 分钟拉 Chrome;或确认 composition 存在且 lint 通过',
             });
             return;
           }
@@ -667,7 +803,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react(), centaurRuntimeApiPlugin(env), videoRenderApiPlugin()],
+    plugins: [react(), centaurRuntimeApiPlugin(env), assetUploadApiPlugin(), videoRenderApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
