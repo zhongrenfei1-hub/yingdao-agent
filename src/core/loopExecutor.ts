@@ -6,6 +6,12 @@ import { getClientAsync, extractModelText } from '../adapters/ai-client';
 import { findTool } from '../adapters/tool-registry';
 import { renderDemoRemixVideo, type ScriptJson } from '../adapters/video-renderer';
 import { useLoopStore } from './loopStore';
+import {
+  PUBLISH_PACK_FIELD,
+  parsePublishPack,
+  publishPackSchemaHint,
+  serializePublishPack,
+} from './publishPack';
 import type { LoopExecuteContext, LoopTask, LoopTaskDraft } from './types';
 
 function truncate(text: string, maxLen: number): string {
@@ -40,6 +46,7 @@ export async function executeTask(
   }
 
   const tool = findTool(task.appToolId);
+  const isPublishPack = task.appToolId === 'short-video-publish-packager';
 
   const client = await getClientAsync();
 
@@ -54,6 +61,7 @@ export async function executeTask(
     context.memories.length > 0 ? `已有记忆：\n${context.memories.join('\n')}` : '',
     tool ? `用户输入：\n${formatInputs(tool, task.inputParams)}` : `用户输入：\n${JSON.stringify(task.inputParams)}`,
     tool ? `输出要求：${tool.outputInstruction}` : '请生成可直接使用的内容。',
+    isPublishPack ? publishPackSchemaHint() : '',
   ].filter(Boolean).join('\n\n');
 
   let raw: unknown;
@@ -68,6 +76,22 @@ export async function executeTask(
   if (!content) throw new Error('模型未返回文本');
 
   const title = extractTitle(content, task.appName);
+
+  if (isPublishPack) {
+    const parsed = parsePublishPack(content);
+    if (parsed) {
+      const platformNames = parsed.platforms.map((p) => p.platform).join(' / ');
+      return {
+        title: platformNames ? `发布包 · ${platformNames}` : title,
+        content,
+        preview: platformNames
+          ? `已生成 ${parsed.platforms.length} 个平台的发布包:${platformNames}`
+          : truncate(content, 200),
+        fields: { [PUBLISH_PACK_FIELD]: serializePublishPack(parsed) },
+        generatedAt: new Date().toISOString(),
+      };
+    }
+  }
 
   return {
     title,

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Check, ChevronDown, ChevronUp, Edit3, Eye, X } from 'lucide-react';
 import type { LoopTask } from '../core/types';
+import { PUBLISH_PACK_FIELD } from '../core/publishPack';
 import { useI18n } from '../i18n';
+import PublishPackPanel from './PublishPackPanel';
 
 interface LoopDraftCardProps {
   task: LoopTask;
@@ -42,7 +44,13 @@ export default function LoopDraftCard({ task, onApprove, onReject, onViewFull }:
         {isRejected && <span className="flex items-center gap-1 text-xs text-terracotta"><X size={14} /> {t('draft.rejected')}</span>}
       </div>
 
-      {task.draft && (
+      {task.draft && task.draft.fields?.[PUBLISH_PACK_FIELD] && (
+        <div className="mt-3">
+          <PublishPackPanel json={String(task.draft.fields[PUBLISH_PACK_FIELD])} />
+        </div>
+      )}
+
+      {task.draft && !task.draft.fields?.[PUBLISH_PACK_FIELD] && (
         <div className="mt-3">
           {task.draft.fields?.videoUrl && (
             <div className="mb-3 overflow-hidden rounded-xl border border-border-cream bg-black">

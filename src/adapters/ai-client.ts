@@ -240,6 +240,73 @@ function generateDemoPlanResponse(prompt: string): string {
 function generateDemoContentResponse(prompt: string): string {
   const english = wantsEnglish(prompt);
 
+  // 影刀:短视频发布包 → 多平台结构化 JSON
+  if (prompt.includes('short-video-publish-packager') || prompt.includes('短视频发布包')) {
+    return JSON.stringify({
+      platforms: [
+        {
+          platform: '抖音',
+          title: english ? 'Yingdao auto-remix · one click' : '影刀一键自动混剪本地素材',
+          caption: english
+            ? 'Your local footage piles up. Yingdao reads it, follows the script, edits in 60 seconds.'
+            : '本地素材积一年,影刀读你的素材,按脚本自动剪,一分钟出片。',
+          hashtags: ['#AI剪辑', '#影刀', '#自动混剪', '#效率工具'],
+          suggestedTime: '工作日 19:00-21:00 / 周末 12:00-14:00',
+          abVariants: [
+            {
+              title: '本地素材积一年,AI 帮你一键混剪',
+              caption: '不用学剪映,不用等剪辑师,影刀直接读你硬盘里的素材自动出片。',
+            },
+            {
+              title: '还在手剪短视频?试试影刀',
+              caption: '影刀按脚本自动选镜头、对时间线、加字幕,一分钟一条 9:16 粗剪。',
+            },
+          ],
+        },
+        {
+          platform: 'TikTok',
+          title: 'Yingdao · auto remix from your footage',
+          caption: english
+            ? 'AI reads your local assets and edits a 9:16 short in 60s. No editor needed.'
+            : 'AI reads your local clips and edits a 9:16 short in 60s. No editor needed.',
+          hashtags: ['#AIediting', '#ShortVideo', '#Yingdao', '#ProductivityTool'],
+          suggestedTime: 'Weekdays 7-9 PM local time',
+          abVariants: [
+            { title: 'Stop manually editing TikToks', caption: 'Let AI cut your footage to your script in 60 seconds.' },
+            { title: 'Your footage, AI-edited', caption: 'Yingdao reads your local clips and outputs a 9:16 short.' },
+          ],
+        },
+        {
+          platform: '小红书',
+          title: '私藏 · 这个 AI 工具能直接读我硬盘里的素材自动剪',
+          caption: '今天来安利一个我自己在用的 AI 剪辑工具:影刀。\n\n• 它会读你电脑里的素材文件夹\n• 按你写的脚本自动选镜头、拼时间线\n• 一分钟出一条 9:16 短视频\n\n不是那种纯 AI 生成的假视频,是真的用你自己的素材。\n\n姐妹们快去试 👉',
+          hashtags: ['#AI神器', '#剪辑工具', '#效率提升', '#自媒体'],
+          suggestedTime: '工作日午休 12:00-13:00 / 晚 21:00-23:00',
+          abVariants: [
+            { title: '0 剪辑基础也能出片的 AI 工具', caption: '不用学软件,把素材丢进去就出片。' },
+            { title: '宝藏 AI 剪辑工具来了', caption: '我硬盘里的素材终于不用吃灰了。' },
+          ],
+        },
+      ],
+      complianceChecklist: [
+        '音乐授权:BGM 必须使用商用授权曲库',
+        '人像授权:出现真人脸需有书面授权',
+        '商标 Logo:避免出现未授权的真实品牌 Logo',
+        '平台敏感词:避开"最","第一","唯一"等绝对化用语',
+        '夸大宣传:避免"一键出爆款""保证涨粉"等承诺式表达',
+        '医疗 / 金融 / 投资类用语:不出现',
+      ],
+      observation24h: [
+        '播放量(目标 ≥ 5000)',
+        '完播率(目标 ≥ 35%)',
+        '互动率 = (赞+评+藏+转)/播放(目标 ≥ 5%)',
+        '涨粉数(目标 ≥ 20)',
+        '评论关键词监控:负面 / 引流 / 同行',
+        '是否触发限流(前 30 分钟播放 < 200 即警戒)',
+      ],
+    }, null, 2);
+  }
+
   // 影刀:短视频脚本分镜 -> 输出结构化 JSON, 让下游 remix 按 scenes 切镜头
   if (prompt.includes('short-video-script-writer') || prompt.includes('短视频脚本分镜')) {
     return JSON.stringify({
