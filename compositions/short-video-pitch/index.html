@@ -55,6 +55,80 @@
         pointer-events: none;
       }
 
+      /* ===== Stage-14 SVG 装饰层(科技感氛围)===== */
+      .decor {
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .decor-code {
+        top: 380px;
+        left: 80px;
+        font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+        font-size: 96px;
+        font-weight: 700;
+        color: rgba(124, 58, 237, 0.18);
+        letter-spacing: -0.05em;
+      }
+      .decor-nodes {
+        bottom: 360px;
+        right: 60px;
+      }
+      .decor-orbit {
+        top: 600px;
+        right: 100px;
+        width: 220px;
+        height: 220px;
+      }
+      .decor-bracket {
+        bottom: 480px;
+        left: 100px;
+        font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+        font-size: 72px;
+        font-weight: 700;
+        color: rgba(124, 58, 237, 0.14);
+      }
+      .decor-bar {
+        position: absolute;
+        background: linear-gradient(90deg, rgba(124, 58, 237, 0.6) 0%, transparent 100%);
+        height: 2px;
+        border-radius: 1px;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .decor-bar.b1 {
+        top: 480px;
+        right: 80px;
+        width: 240px;
+      }
+      .decor-bar.b2 {
+        bottom: 540px;
+        left: 80px;
+        width: 320px;
+      }
+      .decor-tag {
+        position: absolute;
+        z-index: 2;
+        font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+        font-size: 22px;
+        color: rgba(109, 40, 217, 0.55);
+        padding: 6px 14px;
+        border: 1px solid rgba(124, 58, 237, 0.25);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(8px);
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      .decor-tag.t1 {
+        top: 720px;
+        left: 120px;
+      }
+      .decor-tag.t2 {
+        bottom: 700px;
+        right: 90px;
+      }
+
       /* 顶部 badge,常驻 */
       .badge-stage {
         position: absolute;
@@ -172,6 +246,33 @@
       <div class="glow"></div>
       <div class="glow-2"></div>
 
+      <!-- ===== SVG 装饰层(背景增强) ===== -->
+      <div class="decor decor-code" aria-hidden>&lt;/&gt;</div>
+      <div class="decor decor-bracket" aria-hidden>{ }</div>
+
+      <svg class="decor decor-nodes" width="200" height="200" viewBox="0 0 100 100" aria-hidden>
+        <line x1="20" y1="20" x2="80" y2="50" stroke="rgba(124,58,237,0.32)" stroke-width="1.2"/>
+        <line x1="80" y1="50" x2="30" y2="82" stroke="rgba(124,58,237,0.32)" stroke-width="1.2"/>
+        <line x1="30" y1="82" x2="20" y2="20" stroke="rgba(124,58,237,0.32)" stroke-width="1.2"/>
+        <line x1="80" y1="50" x2="20" y2="20" stroke="rgba(124,58,237,0.18)" stroke-width="0.8"/>
+        <circle cx="20" cy="20" r="3.5" fill="rgba(124,58,237,0.7)"/>
+        <circle cx="80" cy="50" r="3.5" fill="rgba(124,58,237,0.7)"/>
+        <circle cx="30" cy="82" r="3.5" fill="rgba(124,58,237,0.7)"/>
+      </svg>
+
+      <svg class="decor decor-orbit" viewBox="0 0 100 100" aria-hidden>
+        <circle cx="50" cy="50" r="38" stroke="rgba(124,58,237,0.22)" stroke-width="0.8" fill="none"/>
+        <circle cx="50" cy="50" r="28" stroke="rgba(124,58,237,0.18)" stroke-width="0.6" fill="none" stroke-dasharray="2 4"/>
+        <circle cx="88" cy="50" r="4" fill="rgba(124,58,237,0.85)"/>
+        <circle cx="50" cy="22" r="3" fill="rgba(167,139,250,0.75)"/>
+      </svg>
+
+      <div class="decor-bar b1" aria-hidden></div>
+      <div class="decor-bar b2" aria-hidden></div>
+
+      <div class="decor-tag t1" aria-hidden>cycle.feedback()</div>
+      <div class="decor-tag t2" aria-hidden>loop.next()</div>
+
       <!-- Badge:0-14s 常驻(track 0) -->
       <div
         id="brand-badge"
@@ -258,6 +359,27 @@
       tl.from(".glow", { scale: 0.6, opacity: 0, duration: 1.4, ease: "power2.out" }, 0);
       tl.from(".glow-2", { scale: 0.6, opacity: 0, duration: 1.6, ease: "power2.out" }, 0.3);
       tl.from(".badge", { y: -40, opacity: 0, duration: 0.6, ease: "power3.out" }, 0.2);
+
+      // ===== Stage-14 SVG 装饰层入场 + 持续运动 =====
+      // 入场:stagger,从 t=0.3 开始
+      tl.from(
+        [".decor-code", ".decor-bracket", ".decor-nodes", ".decor-orbit", ".decor-bar", ".decor-tag"],
+        { opacity: 0, scale: 0.7, duration: 0.9, ease: "power3.out", stagger: 0.12 },
+        0.3,
+      );
+      // 持续浮动 — code 上下
+      tl.to(".decor-code", { y: "-=18", duration: 3.0, ease: "sine.inOut", yoyo: true, repeat: 5 }, 0);
+      // 持续浮动 — bracket 反向
+      tl.to(".decor-bracket", { y: "+=14", duration: 3.5, ease: "sine.inOut", yoyo: true, repeat: 4 }, 0);
+      // nodes 缓慢旋转(完整 15s 转 1.5 圈)
+      tl.to(".decor-nodes", { rotation: 540, duration: 15, ease: "none", transformOrigin: "50% 50%" }, 0);
+      // orbit 反向旋转更慢
+      tl.to(".decor-orbit", { rotation: -360, duration: 15, ease: "none", transformOrigin: "50% 50%" }, 0);
+      // bar 横向滑动 + 透明度呼吸
+      tl.to(".decor-bar.b1", { x: "-=40", opacity: 0.45, duration: 4, ease: "sine.inOut", yoyo: true, repeat: 3 }, 0);
+      tl.to(".decor-bar.b2", { x: "+=30", opacity: 0.5, duration: 5, ease: "sine.inOut", yoyo: true, repeat: 2 }, 0);
+      // tag 微浮 + 透明度呼吸
+      tl.to(".decor-tag", { y: "-=10", opacity: 0.85, duration: 2.5, ease: "sine.inOut", yoyo: true, repeat: 5, stagger: 0.3 }, 0.5);
 
       // ===== 5 段 caption 与 15.5 秒 Kokoro zf_xiaobei 旁白同步 =====
       // 切分依据:Kokoro 节奏(比 Tingting 慢 ~10%),按句号 / 逗号断
