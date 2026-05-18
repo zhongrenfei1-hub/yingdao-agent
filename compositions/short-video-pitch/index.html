@@ -177,7 +177,7 @@
         id="brand-badge"
         class="badge-stage clip"
         data-start="0"
-        data-duration="14"
+        data-duration="15.5"
         data-track-index="0"
       >
         <div class="badge">
@@ -191,7 +191,7 @@
         id="caption-stage"
         class="caption-stage clip"
         data-start="0"
-        data-duration="14"
+        data-duration="15.5"
         data-track-index="1"
       >
         <h2 class="caption" id="c1">AI Agent 不能只会调用工具</h2>
@@ -201,12 +201,12 @@
         <h2 class="caption small" id="c5">开源在 <span class="brand">GitHub</span></h2>
       </div>
 
-      <!-- CTA pill:11-14s(track 2) -->
+      <!-- CTA pill:12.2-15.5s(track 2) -->
       <div
         id="cta-row"
         class="cta-row clip"
-        data-start="11"
-        data-duration="3"
+        data-start="12.2"
+        data-duration="3.3"
         data-track-index="2"
       >
         <div class="pill">
@@ -220,7 +220,7 @@
         id="progress-bar"
         class="progress clip"
         data-start="0"
-        data-duration="14"
+        data-duration="15.5"
         data-track-index="3"
       >
         <div class="progress-fill"></div>
@@ -229,9 +229,9 @@
       <!-- 音频:0-14s,中文 TTS 旁白(track 4) -->
       <audio
         id="narration"
-        src="./narration.wav"
+        src="./narration-kokoro.wav"
         data-start="0"
-        data-duration="14"
+        data-duration="15.5"
         data-track-index="4"
         data-volume="0.95"
       ></audio>
@@ -259,14 +259,14 @@
       tl.from(".glow-2", { scale: 0.6, opacity: 0, duration: 1.6, ease: "power2.out" }, 0.3);
       tl.from(".badge", { y: -40, opacity: 0, duration: 0.6, ease: "power3.out" }, 0.2);
 
-      // ===== 5 段 caption 与 14 秒中文旁白同步 =====
-      // 切分依据:say Tingting 节奏,按句号 / 逗号断
+      // ===== 5 段 caption 与 15.5 秒 Kokoro zf_xiaobei 旁白同步 =====
+      // 切分依据:Kokoro 节奏(比 Tingting 慢 ~10%),按句号 / 逗号断
       const segments = [
-        { id: "#c1", start: 0.3,  end: 2.6,  enterEase: "power3.out" },
-        { id: "#c2", start: 2.8,  end: 5.2,  enterEase: "expo.out" },
-        { id: "#c3", start: 5.4,  end: 7.6,  enterEase: "power3.out" },
-        { id: "#c4", start: 7.8,  end: 10.8, enterEase: "back.out(1.4)" },
-        { id: "#c5", start: 11.0, end: 14.0, enterEase: "power3.out" },
+        { id: "#c1", start: 0.4,  end: 3.2,  enterEase: "power3.out" },
+        { id: "#c2", start: 3.4,  end: 6.0,  enterEase: "expo.out" },
+        { id: "#c3", start: 6.2,  end: 8.6,  enterEase: "power3.out" },
+        { id: "#c4", start: 8.8,  end: 12.0, enterEase: "back.out(1.4)" },
+        { id: "#c5", start: 12.2, end: 15.5, enterEase: "power3.out" },
       ];
 
       segments.forEach(({ id, start, end, enterEase }, idx) => {
@@ -278,14 +278,14 @@
       });
 
       // CTA pill 跟最后一段 caption 同步入场
-      tl.set(".cta-row", { autoAlpha: 0, scale: 0.7 }, 11);
-      tl.to(".cta-row", { autoAlpha: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 11.15);
+      tl.set(".cta-row", { autoAlpha: 0, scale: 0.7 }, 12.2);
+      tl.to(".cta-row", { autoAlpha: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 12.35);
 
-      // 进度条横向填充 14s
-      tl.fromTo(".progress-fill", { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 14 }, 0);
+      // 进度条横向填充 15.5s
+      tl.fromTo(".progress-fill", { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 15.5 }, 0);
 
       // 最终 fade out
-      tl.to("#root", { opacity: 0, duration: 0.5, ease: "power2.in" }, 13.5);
+      tl.to("#root", { opacity: 0, duration: 0.5, ease: "power2.in" }, 15.0);
 
       window.__timelines["main"] = tl;
     </script>
