@@ -517,7 +517,7 @@ interface ScriptInput {
 //   ffmpeg 残留作用:hyperframes 完成后用 runFfmpeg 抽帧做封面
 
 const HF_VERSION = '0.6.12';
-const HF_COMPOSITION = path.resolve(__dirname, 'compositions/short-video-demo');
+const HF_COMPOSITION = path.resolve(__dirname, 'compositions/short-video-pitch');
 
 function splitTitleTwoLines(title: string): [string, string] {
   const t = (title ?? '').trim();
