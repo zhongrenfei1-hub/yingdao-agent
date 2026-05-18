@@ -495,75 +495,26 @@ function runFfmpeg(args: string[]): Promise<void> {
   });
 }
 
-interface SceneInput { id?: string; duration?: number }
-interface ScriptInput { duration?: number; scenes?: SceneInput[] }
-interface TimelineEntry { id: string; start: number; end: number }
-
-function buildTimeline(script: ScriptInput | undefined): { durationSeconds: number; timeline: TimelineEntry[] } {
-  const scenes = Array.isArray(script?.scenes) ? script!.scenes! : null;
-  if (!scenes || scenes.length === 0) {
-    // 默认 12 秒 3 段:钩子 / 演示 / CTA
-    return {
-      durationSeconds: 12,
-      timeline: [
-        { id: 'hook', start: 0.3, end: 3 },
-        { id: 'demo', start: 3.5, end: 8 },
-        { id: 'cta', start: 8.5, end: 12 },
-      ],
-    };
-  }
-  let cursor = 0;
-  const timeline: TimelineEntry[] = scenes.map((s, i) => {
-    const dur = typeof s.duration === 'number' && s.duration > 0 ? s.duration : 4;
-    const id = String(s.id ?? ['hook', 'demo', 'cta'][i] ?? `scene${i}`).toLowerCase();
-    const start = cursor + 0.3;
-    const end = cursor + dur - 0.2;
-    cursor += dur;
-    return { id, start, end };
-  });
-  // clamp to [6, 30] 防止异常
-  const total = Math.max(6, Math.min(30, cursor || 12));
-  return { durationSeconds: total, timeline };
+// === ScriptJson 输入接口 ===
+//   由上游 short-video-script-writer 输出 → POST /api/video/render 消费
+interface SceneInput {
+  id?: string;
+  duration?: number;
+  caption?: string;
 }
 
-function boxesForScene(t: TimelineEntry): string[] {
-  const enable = `enable='between(t,${t.start.toFixed(2)},${t.end.toFixed(2)})'`;
-  if (t.id === 'hook' || t.id === 'intro' || t.id === 'opening') {
-    return [
-      `drawbox=x=80:y=420:w=iw-160:h=240:color=white@0.92:t=fill:${enable}`,
-      `drawbox=x=80:y=420:w=iw-160:h=240:color=0x2E1065:t=6:${enable}`,
-      `drawbox=x=100:y=560:w=iw-200:h=8:color=0x2E1065@0.6:t=fill:${enable}`,
-      `drawbox=x=120:y=620:w=(iw-240)*0.7:h=8:color=0x6D28D9@0.6:t=fill:${enable}`,
-    ];
-  }
-  if (t.id === 'demo' || t.id === 'product' || t.id === 'showcase' || t.id === 'b-roll') {
-    const dur = (t.end - t.start).toFixed(2);
-    const start = t.start.toFixed(2);
-    const fillExpr = `(iw-320)*((t-${start})/${dur})`;
-    return [
-      `drawbox=x=100:y=720:w=iw-200:h=720:color=black@0.75:t=fill:${enable}`,
-      `drawbox=x=100:y=720:w=iw-200:h=720:color=0xA78BFA:t=8:${enable}`,
-      `drawbox=x=160:y=820:w=${fillExpr}:h=12:color=0xA78BFA:t=fill:${enable}`,
-    ];
-  }
-  if (t.id === 'cta' || t.id === 'outro' || t.id === 'closing') {
-    return [
-      `drawbox=x=140:y=900:w=iw-280:h=320:color=0x6D28D9@0.95:t=fill:${enable}`,
-      `drawbox=x=140:y=900:w=iw-280:h=320:color=white@0.95:t=6:${enable}`,
-      `drawbox=x=180:y=1020:w=iw-360:h=8:color=white@0.85:t=fill:${enable}`,
-    ];
-  }
-  // 未知类型 — 通用紫色框占位
-  return [
-    `drawbox=x=120:y=600:w=iw-240:h=400:color=0x6D28D9@0.55:t=fill:${enable}`,
-    `drawbox=x=120:y=600:w=iw-240:h=400:color=0xA78BFA:t=6:${enable}`,
-  ];
+interface ScriptInput {
+  duration?: number;
+  scenes?: SceneInput[];
+  title?: string;
+  hook?: string;
+  platform?: string;
+  cta?: string;
 }
 
-// === HyperFrames adapter(影刀飞轮 阶段 7 接入)===
-//   优先用 hyperframes 出真带文字带动画的 mp4(走 compositions/short-video-demo)
-//   失败时自动降级到下方 ffmpeg drawbox 实现,WIP 代码全部保留作为 fallback
-//   显式传 `adapter: 'ffmpeg'` 可跳过 hyperframes 直接走 ffmpeg(快速预览/调试)
+// === HyperFrames 视频渲染管线(stage-12:已退役 ffmpeg drawbox)===
+//   走 compositions/short-video-demo,真带文字带 GSAP 动画的 mp4
+//   ffmpeg 残留作用:hyperframes 完成后用 runFfmpeg 抽帧做封面
 
 const HF_VERSION = '0.6.12';
 const HF_COMPOSITION = path.resolve(__dirname, 'compositions/short-video-demo');
@@ -591,13 +542,6 @@ function splitTitleTwoLines(title: string): [string, string] {
   return [t.slice(0, mid).trim(), t.slice(mid).trim()];
 }
 
-interface ScriptForHyperframes extends ScriptInput {
-  title?: string;
-  hook?: string;
-  platform?: string;
-  cta?: string;
-}
-
 function scriptToHyperframesVariables(script: ScriptInput | undefined): Record<string, string> {
   const D = {
     badge: '影刀短视频',
@@ -609,16 +553,15 @@ function scriptToHyperframesVariables(script: ScriptInput | undefined): Record<s
     accent: '#7c3aed',
   };
   if (!script) return D;
-  const s = script as ScriptForHyperframes;
-  const [title1, title2] = splitTitleTwoLines(s.title ?? D.title1);
-  const firstScene = script.scenes?.[0] as (SceneInput & { caption?: string }) | undefined;
+  const [title1, title2] = splitTitleTwoLines(script.title ?? D.title1);
+  const firstScene = script.scenes?.[0];
   return {
     badge: D.badge,
-    eyebrow: (s.platform || s.hook?.slice(0, 24) || D.eyebrow).trim(),
+    eyebrow: (script.platform || script.hook?.slice(0, 24) || D.eyebrow).trim(),
     title1: title1 || D.title1,
     title2: title2 || D.title2,
-    desc: (s.hook || firstScene?.caption || D.desc).trim(),
-    cta: (s.cta || D.cta).trim(),
+    desc: (script.hook || firstScene?.caption || D.desc).trim(),
+    cta: (script.cta || D.cta).trim(),
     accent: D.accent,
   };
 }
@@ -681,84 +624,36 @@ function videoRenderApiPlugin(): Plugin {
         }
 
         try {
-          // 从 request body 读 script + 可选 adapter(由上游 short-video-script-writer 输出)
+          // 从 request body 读 script(由上游 short-video-script-writer 输出)
           const body = await readRequestBody(req);
-          let parsed: { script?: ScriptInput; adapter?: 'hyperframes' | 'ffmpeg' } = {};
+          let parsed: { script?: ScriptInput } = {};
           if (body.trim()) {
-            try { parsed = JSON.parse(body) as typeof parsed; } catch { /* fallback to default */ }
+            try { parsed = JSON.parse(body) as typeof parsed; } catch { /* 用空 script,走 default */ }
           }
 
-          // 默认走 hyperframes;adapter='ffmpeg' 或 hyperframes 失败时降级到 ffmpeg drawbox
-          if ((parsed.adapter ?? 'hyperframes') === 'hyperframes') {
-            try {
-              await renderViaHyperframes(parsed.script, outputDir, videoPath, posterPath);
-              sendJson(res, 200, {
-                videoUrl: `/generated/yingdao-auto-remix-demo.mp4?t=${Date.now()}`,
-                posterUrl: `/generated/yingdao-auto-remix-demo.jpg?t=${Date.now()}`,
-                outputPath: videoPath,
-                adapter: 'hyperframes',
-                durationSeconds: 5.3,
-                composition: 'short-video-demo',
-              });
-              return;
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              console.warn('[/api/video/render] hyperframes failed → fallback ffmpeg:', msg);
-              // 继续到下方 ffmpeg 路径(WIP 代码,作为降级方案)
-            }
+          // 唯一路径:hyperframes 渲染。失败直接 500,不再静默降级到 ffmpeg 丑色块。
+          try {
+            await renderViaHyperframes(parsed.script, outputDir, videoPath, posterPath);
+            sendJson(res, 200, {
+              videoUrl: `/generated/yingdao-auto-remix-demo.mp4?t=${Date.now()}`,
+              posterUrl: `/generated/yingdao-auto-remix-demo.jpg?t=${Date.now()}`,
+              outputPath: videoPath,
+              adapter: 'hyperframes',
+              durationSeconds: 5.3,
+              composition: 'short-video-demo',
+            });
+            return;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error('[/api/video/render] hyperframes 失败:', msg);
+            sendJson(res, 500, {
+              error: 'hyperframes 渲染失败',
+              detail: msg,
+              hint: '首次启动需 1-2 分钟拉 Chrome;或确认 compositions/short-video-demo/ 存在且 lint 通过',
+            });
+            return;
           }
 
-          // === ffmpeg drawbox 路径(快速 fallback / 调试用,WIP 代码全部保留)===
-          const { durationSeconds, timeline } = buildTimeline(parsed.script);
-
-          await mkdir(outputDir, { recursive: true });
-
-          // 紫色 gradients 底图 + 按 timeline 动态生成镜头切换 drawbox
-          //   每个 scene.id 映射到不同视觉:hook 白色标题框 / demo 黑色演示框 + 加载条 / cta 紫色按钮框
-          //   缺省(无 script)时 fallback 到 0.3-3 / 3.5-8 / 8.5-12 三段
-          // 说明：ffmpeg 未编译 libfreetype, drawtext 不可用;暂以 drawbox 占位
-          const vf = [
-            'format=yuv420p',
-            // 顶部紫色品牌横条
-            'drawbox=x=0:y=0:w=iw:h=80:color=0x6D28D9@0.9:t=fill',
-            // 各场景 drawbox(根据 scene.id 决定形状)
-            ...timeline.flatMap(boxesForScene),
-            // 底部进度条
-            `drawbox=x=0:y=ih-220:w=iw*t/${durationSeconds}:h=6:color=0xA78BFA:t=fill`,
-            // 底部字幕安全区
-            'drawbox=x=0:y=ih-160:w=iw:h=4:color=0xA78BFA@0.9:t=fill',
-            'drawbox=x=0:y=ih-156:w=iw:h=156:color=black@0.45:t=fill',
-          ].join(',');
-
-          await runFfmpeg([
-            '-y',
-            '-f', 'lavfi',
-            '-i', `gradients=size=1080x1920:duration=${durationSeconds}:rate=30:speed=0.12:c0=0x2E1065:c1=0x6D28D9:c2=0xA78BFA:c3=0x4C1D95:n=4`,
-            '-vf', vf,
-            '-c:v', 'libx264',
-            '-preset', 'ultrafast',
-            '-t', String(durationSeconds),
-            videoPath,
-          ]);
-
-          // 抽 1 秒处一帧做封面
-          await runFfmpeg([
-            '-y',
-            '-ss', '00:00:01',
-            '-i', videoPath,
-            '-frames:v', '1',
-            '-q:v', '3',
-            posterPath,
-          ]);
-
-          sendJson(res, 200, {
-            videoUrl: `/generated/yingdao-auto-remix-demo.mp4?t=${Date.now()}`,
-            posterUrl: `/generated/yingdao-auto-remix-demo.jpg?t=${Date.now()}`,
-            outputPath: videoPath,
-            adapter: 'ffmpeg-local',
-            durationSeconds,
-            sceneTimeline: timeline,
-          });
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           sendJson(res, 500, { error: message });
