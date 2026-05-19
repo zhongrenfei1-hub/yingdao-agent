@@ -16,6 +16,8 @@ const IRIS = '#7c3aed';
 const PRESETS: Array<{ label: string; baseUrl: string; modelHint: string }> = [
   { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', modelHint: 'gpt-4o-mini' },
   { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', modelHint: 'deepseek-chat' },
+  { label: 'Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', modelHint: 'gemini-2.0-flash' },
+  { label: 'Claude(Anthropic)', baseUrl: 'https://api.anthropic.com/v1', modelHint: 'claude-3-5-sonnet-latest' },
   { label: '智谱 BigModel', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', modelHint: 'glm-4-flash' },
   { label: '通义 DashScope', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', modelHint: 'qwen-plus' },
 ];
