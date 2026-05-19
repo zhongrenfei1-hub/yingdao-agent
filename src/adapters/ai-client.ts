@@ -8,6 +8,7 @@
  */
 
 import { invokeRuntimeModel } from './runtime';
+import { invokeCustomRuntime, loadCustomRuntime, onCustomRuntimeChange } from './customRuntime';
 
 export interface AIClient {
   models: {
@@ -494,12 +495,37 @@ function generateDemoFeedbackResponse(): string {
 // ── 客户端管理 ────────────────────────────────────────────────────
 
 let _client: AIClient | null = null;
+let _customRuntimeListenerInstalled = false;
+
+function ensureCustomRuntimeListener(): void {
+  if (_customRuntimeListenerInstalled) return;
+  if (typeof window === 'undefined') return;
+  _customRuntimeListenerInstalled = true;
+  // 用户改了 customRuntime → 清缓存 client,下次 invoke 重新决定走哪条路
+  onCustomRuntimeChange(() => {
+    _client = null;
+  });
+}
 
 export async function getClientAsync(): Promise<AIClient> {
+  ensureCustomRuntimeListener();
   if (!_client) {
     _client = {
       models: {
         invoke: async ({ prompt }: { prompt: string }) => {
+          // 优先级 1:用户在浏览器里填的 OpenAI-compat 端点(localStorage)
+          const custom = loadCustomRuntime();
+          if (custom) {
+            try {
+              const text = await invokeCustomRuntime(prompt, custom);
+              setLastClientMode('real');
+              return { text, provider: 'custom', model: custom.model };
+            } catch (err) {
+              console.warn('[ai-client] custom runtime failed, falling back:', err);
+              // 不直接降级 demo,先试 server middleware 路径
+            }
+          }
+          // 优先级 2:vite middleware proxy(.env CENTAUR_MODEL_API_KEY)
           try {
             const result = await invokeRuntimeModel(prompt);
             setLastClientMode('real');
