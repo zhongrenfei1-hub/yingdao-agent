@@ -186,6 +186,74 @@ quick links 覆盖 QUICK_START / PRD_SUMMARY / Self-Host。
 工程基础设施:`npm test` 跑 11 项 publishPack parse/serialize/format
 测试,1.4s 完成;CI workflow 加 "Unit tests" step;push/PR 自动跑。
 
+### 📋 stage-48 · RELEASE_NOTES 补齐 stage-24~47
+
+之前只到 stage-23,把后续 24 圈完整补齐:smoke / timers / QUICK_START /
+CI lint / health / 飞轮日志 / brief 数据贯穿 / render timeout 等。
+
+### 🧪 stage-49 · npm run lint:compositions 本地跑 4 个 composition lint
+
+跟 CI 同款,push 前本地能验证 hyperframes lint 0/0。
+
+### ⚡ stage-50 · short-video-pitch render fps 30→24
+
+docker software WebGL 渲染长视频易崩,pitch composition 帧数 465 → 372
+(-20%),稳定性提升。
+
+### ✨ stage-51 · App 顶部加 HeroBanner
+
+参考产品 landing 的 hero 模式 + 影刀 iris 紫色板:badge + h1 大字 +
+副文案 + 4 能力卡片(快速制作 / Loop 工作台 / 发布包 / 本地素材)。
+
+### 🐱 stage-52 · 影刀 logo(白猫咪 + 紫色腮红)
+
+从用户自己另一个 repo 共享 brand asset。512×512 PNG,
+HeroBanner 顶部 + favicon + apple-touch-icon。
+
+### 🎨 stage-53 · 整体视觉重做
+
+浅紫氛围渐变 + 大 logo header + underline tab + 现代化 CSS vars
+(--iris-50/100/200/500/600/700)。
+
+### 🎯 stage-54~57 · 设计 token 跟火花视觉对齐
+
+- iris 紫 10 阶 Tailwind color scale + shadcn 标准圆角 0.625rem 阶梯
+- QuickMakeWorkbench / LoopConversationWorkbench / LoopChatView /
+  RuntimeDropdown 主操作色从 terracotta 统一切到 iris-600
+- 错误态保留 terracotta 作语义色,不一刀切
+
+### 🎙 stage-58 · Edge TTS endpoint
+
+接微软 neural TTS(rany2/edge-tts GPL-3 pip 包,运行时依赖):
+
+- Dockerfile 加 python3 + pip install edge-tts
+- scripts/tts-edge.py 自己写的 wrapper(asyncio + Communicate API)
+- POST /api/tts/edge { text, voice? } → 写 mp3 到 public/generated/
+- 实测 11 字中文 6 秒出 19KB mp3,音质比 Kokoro 明显提升
+- smoke test 加 TTS 验证项,现在 8 项全绿
+
+### 📤 stage-59 · 合规 deep link 自动发布
+
+PublishPackPanel 每平台加"📤 发到 XX"按钮(stage-15 留下的合规
+自动发布路径):
+
+- 点击 → 复制完整文案到剪贴板 + window.open 跳官方创作者后台
+- 6 个平台:抖音 / TikTok / 小红书 / 快手 / 视频号 / B 站
+- 合规零账号风险(不走 OAuth / 不绕 TOS / 不爬 RPA)
+- 用户登录后台 + 粘文案 + 选视频 + 点发布,3 个动作完事
+
+### 🎬 stage-60 · Edge TTS 接到 short-video-pitch 旁白
+
+让 production 主出口 short-video-pitch composition 用 Edge TTS
+neural 旁白替代固定 Kokoro,音质大提升:
+
+- composition variables 加 narrationUrl + script 动态注入 audio src
+- vite middleware 在 pitch 分支:script 有 voiceover → 调
+  scripts/tts-edge.py 生成 mp3 写到 composition 目录 → 作为
+  narrationUrl variable 传给 hyperframes
+- YINGDAO_TTS_VOICE env 控制 voice(默认 XiaoxiaoNeural)
+- edge-tts 失败时 console.warn 自动 fallback Kokoro,不阻塞渲染
+
 ---
 
 ## 协作模式 / 飞轮节奏
