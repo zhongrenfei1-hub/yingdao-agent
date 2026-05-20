@@ -8,6 +8,7 @@ import { useRuntimeStatus } from './hooks/useRuntimeStatus';
 import { BookOpen, Github, Languages, MessagesSquare, Rocket, SlidersHorizontal } from 'lucide-react';
 import RuntimeDropdown from './ui/RuntimeDropdown';
 import ImageScrapePanel from './ui/ImageScrapePanel';
+import HeroBanner from './ui/HeroBanner';
 
 type WorkbenchTab = 'quick' | 'loop';
 
@@ -49,6 +50,8 @@ function AppShell() {
           </div>
         </div>
       </header>
+
+      <HeroBanner />
 
       <div className="mb-4 flex items-center gap-1 rounded-2xl border border-border-cream bg-white/75 p-1 backdrop-blur-sm">
         <TabButton
