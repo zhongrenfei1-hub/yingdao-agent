@@ -812,7 +812,16 @@ interface ScrapedImage {
   height?: number;
 }
 
+// 5 分钟内存缓存:同关键词重复请求直接拿缓存,防 Bing 反爬 + 加速
+const SCRAPE_CACHE_TTL_MS = 5 * 60 * 1000;
+const SCRAPE_CACHE = new Map<string, { ts: number; data: ScrapedImage[] }>();
+
 async function scrapeBingImages(query: string, limit = 24): Promise<ScrapedImage[]> {
+  const cacheKey = `${query}|${limit}`;
+  const hit = SCRAPE_CACHE.get(cacheKey);
+  if (hit && Date.now() - hit.ts < SCRAPE_CACHE_TTL_MS) {
+    return hit.data;
+  }
   const q = encodeURIComponent(query);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 10000);
@@ -859,6 +868,12 @@ async function scrapeBingImages(query: string, limit = 24): Promise<ScrapedImage
         /* 跳过解析失败的条目 */
       }
     });
+    SCRAPE_CACHE.set(cacheKey, { ts: Date.now(), data: out });
+    // 防内存爆:缓存超过 50 条丢最早的
+    if (SCRAPE_CACHE.size > 50) {
+      const oldest = [...SCRAPE_CACHE.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+      if (oldest) SCRAPE_CACHE.delete(oldest[0]);
+    }
     return out;
   } finally {
     clearTimeout(timer);
