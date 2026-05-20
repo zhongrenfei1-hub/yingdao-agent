@@ -33,16 +33,24 @@ export default function HeroBanner() {
       <div className="relative px-5 py-6 md:px-7 md:py-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium"
-              style={{
-                background: 'rgba(124,58,237,0.12)',
-                color: IRIS,
-                border: '1px solid rgba(124,58,237,0.25)',
-              }}
-            >
-              影刀 · Yingdao Agent · v0.1.0
-            </span>
+            <div className="flex items-center gap-3">
+              <img
+                src="/yingdao-logo.png"
+                alt="影刀 logo"
+                className="h-14 w-14 shrink-0 drop-shadow-md"
+                style={{ filter: 'drop-shadow(0 4px 12px rgba(124,58,237,0.2))' }}
+              />
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium"
+                style={{
+                  background: 'rgba(124,58,237,0.12)',
+                  color: IRIS,
+                  border: '1px solid rgba(124,58,237,0.25)',
+                }}
+              >
+                影刀 · Yingdao Agent · v0.1.0
+              </span>
+            </div>
             <h1 className="mt-3 text-2xl font-bold leading-tight text-near-black md:text-3xl">
               本地跑的 <span style={{ color: IRIS }}>AI 产品经理</span>,
               <br className="hidden md:inline" />
