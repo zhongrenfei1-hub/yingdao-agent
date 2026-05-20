@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   CircleDashed,
@@ -440,6 +440,12 @@ function StepRow({ step }: { step: QuickStepState }) {
         : step.status === 'running'
           ? 'border-terracotta/30 bg-warm-sand/40'
           : 'border-border-cream bg-white/60';
+  const eta =
+    step.id === 'remix'
+      ? 'docker software WebGL · 预计 1.5-4 分钟出 5s 视频'
+      : step.id === 'script' || step.id === 'aiPrompt' || step.id === 'publishPack'
+        ? 'LLM · 通常 5-30s'
+        : null;
   return (
     <li className={`rounded-xl border p-3 ${borderCls}`}>
       <div className="flex items-center gap-2">
@@ -447,8 +453,14 @@ function StepRow({ step }: { step: QuickStepState }) {
         <span className="text-sm font-medium text-near-black">
           {step.icon} {step.label}
         </span>
+        {step.status === 'running' && step.startedAt && (
+          <ElapsedTimer startedAt={step.startedAt} />
+        )}
         <StepStatusBadge status={step.status} />
       </div>
+      {step.status === 'running' && eta && (
+        <p className="mt-1 text-[10px] text-stone-gray">{eta}</p>
+      )}
       {step.output && step.status === 'done' && (
         <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded-lg bg-white/70 p-2 text-[11px] leading-5 text-olive-gray">
           {step.output}
@@ -461,6 +473,22 @@ function StepRow({ step }: { step: QuickStepState }) {
         </p>
       )}
     </li>
+  );
+}
+
+function ElapsedTimer({ startedAt }: { startedAt: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const elapsed = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  const mm = Math.floor(elapsed / 60);
+  const ss = elapsed % 60;
+  return (
+    <span className="text-[10px] tabular-nums text-stone-gray">
+      {mm > 0 ? `${mm}:${String(ss).padStart(2, '0')}` : `${ss}s`}
+    </span>
   );
 }
 

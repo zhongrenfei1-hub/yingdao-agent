@@ -1,12 +1,52 @@
-# Centaur Loop / 半人马环
+# Yingdao Agent / 影刀
+
+> Short-video growth Agent built on **Centaur Loop** + AI product-manager interview +
+> hyperframes video pipeline.
+> **`docker compose up -d` → fill Gemini/DeepSeek/OpenAI key in the browser → real 9:16 mp4 out.**
 
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
-[![CI](https://github.com/finewood2008/centaur-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/finewood2008/centaur-loop/actions/workflows/ci.yml)
-[![GitHub Pages](https://github.com/finewood2008/centaur-loop/actions/workflows/pages.yml/badge.svg)](https://github.com/finewood2008/centaur-loop/actions/workflows/pages.yml)
 
-English + 中文 | [简体中文](./README.zh-CN.md) | [Website](https://www.centaurloop.com) | [Technical Design](./CENTAUR_LOOP_TECHNICAL_DOC_EN.md) | [项目定位](./docs/PROJECT_POSITIONING.zh-CN.md)
+[Release notes stage-15~24](./RELEASE_NOTES.zh-CN.md) | [简体中文](./README.zh-CN.md) | [Self-Host](./SELF_HOST.md) | [PRD](./YINGDAO_AGENT_PRD.zh-CN.md)
+
+---
+
+## What Yingdao does
+
+| Entry | Flow |
+|---|---|
+| 🚀 **Quick-make tab** | Topic + selling points + platform + visual style → drop local assets (optional) → **one-click 4-step**: script → AI video prompt → hyperframes remix → multi-platform publish pack (Douyin/TikTok/RedNote) |
+| 🤖 **Loop workbench** | AI **product-manager interview** (topic / audience / selling points / platform / tone) → brief assembled → you reply «开干 / let's go» → 5-tool cycle runs → real 9:16 mp4 |
+| 🖼️ **Image scraper panel** | Floating button bottom-right: article keyword → Bing image search → 24-image grid → click thumbnail to copy original URL straight into the WeChat editor |
+| 🔌 **Custom API form** | Floating button → 4 presets (OpenAI / DeepSeek / Gemini / Claude / 智谱 / 通义) → paste key → test → save. **No restart, no .env edit.** |
+
+## One-line deploy
+
+```bash
+git clone https://github.com/zhongrenfei1-hub/yingdao-agent.git
+cd yingdao-agent
+docker compose up -d --build       # first build ~15 min, later starts < 30s
+# open http://localhost:5180
+bash scripts/smoke-test.sh          # one-shot health check (6 endpoints + real render)
+```
+
+The image bakes Node 22 + ffmpeg + chrome-headless-shell + Noto CJK fonts.
+**Everything renders locally — your assets never leave your machine** (self-hosted by design, see PRD §9).
+
+## Three locked product axes
+
+1. **Local-first + self-hosted**, no SaaS — one docker container on your own box
+2. **AI product manager, not a cron executor** — interview first, then ship
+3. **HyperFrames HTML-as-video** — real text, real GSAP animation, not ffmpeg drawbox placeholders
+
+---
+
+> Below is the upstream **Centaur Loop** doc (Yingdao = Centaur Loop + short-video Agent).
+
+---
+
+# Centaur Loop / 半人马环
 
 **Centaur Loop Studio is the open-source workbench for human-governed AI feedback loops.**
 
