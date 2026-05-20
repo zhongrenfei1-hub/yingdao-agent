@@ -682,6 +682,9 @@ async function renderViaHyperframes(
   // 注意:hyperframes 的 --docker 是"用 docker 跑 chrome" 不是"我在 docker 里",
   // 容器内没装 docker CLI 用不了。容器内的正确路径 = PUPPETEER_EXECUTABLE_PATH 走系统
   // chromium + HF_NO_SANDBOX(已在 docker-compose.yml 注入 env)
+  // docker software WebGL 模式下,18s pitch composition 在 30fps 540 帧
+  // Chrome 撑不住,降到 24fps 减 20% 帧数 + 1 worker 让 GPU 喘气
+  const fps = composition === 'short-video-pitch' ? '24' : '30';
   await runHyperframes(
     [
       '--yes',
@@ -690,6 +693,7 @@ async function renderViaHyperframes(
       '--variables', JSON.stringify(variables),
       '--output', videoPath,
       '--quality', 'draft',
+      '--fps', fps,
     ],
     cwd,
   );
