@@ -254,6 +254,65 @@ neural 旁白替代固定 Kokoro,音质大提升:
 - YINGDAO_TTS_VOICE env 控制 voice(默认 XiaoxiaoNeural)
 - edge-tts 失败时 console.warn 自动 fallback Kokoro,不阻塞渲染
 
+### 📋 stage-61~62 · 飞轮日志补齐
+
+RELEASE_NOTES stage-48~60 + 00_FLYWHEEL.md 主表 stage-30~61 全部上表。
+
+### 🎤 stage-63 · TtsPanel 多 voice 试听浮按
+
+右下角紫色 mono 浮按 [tts]:8 个中文 neural voice(晓晓/晓伊/云扬/
+云希/云健/晓梦/晓贝/晓敏粤)+ 输入文案 + 自动播放 + "保存默认"
+写 localStorage。
+
+### 🎙 stage-64 · fasterwhisper ASR endpoint(MoneyPrinterPlus 同款)
+
+POST /api/asr/whisper(multipart 上传音视频 ≤ 100MB)→ Python wrapper
+spawn faster-whisper(MIT pip 包 · CPU int8 · VAD 过滤 · beam=5)→
+返回 segments 带时间戳。base 模型首次按需下载 ~145MB。端到端测:
+TTS 19KB mp3 反向识别 ✓。
+
+### 🎨 stage-65 · UI 设计四环 · Hero 重做 + 全局未来主义字体
+
+Vibe 关键词:极简 / 高级 / 未来主义 / 锐利字 / 微动画
+
+- JetBrains Mono 字体加载 + tailwind fontFamily.mono +
+  letterSpacing.tightest/.sharp
+- index.css 全局 antialiasing + font-feature-settings + 4 utility:
+  grain-grid(细网格 dot pattern)/ text-sharp / num-stat / lift-hover
+- HeroBanner 重做:mono badge + 锐字 h1 + 数字 stat 横排
+  (40+ commits / 8 smoke / 11 unit / 6 platforms)+ 4 能力卡 +
+  紫色光晕 + grain texture
+
+### 🎯 stage-66~67 · Refine + Design 蔓延全局
+
+- lift-hover 蔓延:QuickMakeWorkbench StepRow / PublishPackPanel
+  平台卡 / CycleOutputPanel Block 全部 hover 上抬
+- 3 个浮按 mono uppercase:[image] [tts] [当前 model],右下角
+  一字排开
+
+### ⌨️ stage-68 · Hero 终端命令风 sub-line
+
+深色 mono 终端块 + iris 紫光标 ▌ 闪烁:`$ docker compose up -d ▌`
+让命令行不只是文档,而是产品 demo 的第一帧。
+
+### 🎬 stage-69~70 · 锐字 + 优雅动画
+
+- nav 三链接全部 mono uppercase tracking-0.18em(github / docs / 语言)
+- TabButton 用 framer-motion layoutId=tab-underline · spring 380/32
+  · iris glow
+- AnimatePresence 包 workbench 主区:tab 切换 fade-up 退出 + fade-down
+  入场,220ms cubic-bezier
+
+### 🔢 stage-71 · Stat 数字 count-up
+
+打开页面 4 个数字从 0 跳到目标值 · 1.4s · cubic-bezier · 产品
+"在脉动"的上瘾微反馈。
+
+### ✨ stage-72 · 4 能力卡 stagger 入场
+
+motion variants 父容器 staggerChildren 0.08s + delay 0.15s,
+4 张卡依次 fade-up 落位,跟 stage-71 count-up 节奏对齐。
+
 ---
 
 ## 协作模式 / 飞轮节奏

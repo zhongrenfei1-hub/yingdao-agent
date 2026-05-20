@@ -132,6 +132,17 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | **阶段 59** | 📤 合规 deep link 自动发布 | PublishPackPanel 每平台"📤 发到 XX"按钮:复制文案 + 跳官方创作者后台;6 个平台支持 | ✅ |
 | **阶段 60** | 🎬 Edge TTS 接 pitch composition 旁白 | composition narrationUrl variable + middleware 调 TTS 生成 mp3 → hyperframes 注入;edge-tts 失败 fallback Kokoro | ✅ |
 | **阶段 61** | 📋 RELEASE_NOTES 补 stage-48~60 | 13 圈产出完整登记 | ✅ |
+| **阶段 62** | 📋 00_FLYWHEEL 主表补 stage-30~61 | 32 圈补齐,飞轮可追溯 | ✅ |
+| **阶段 63** | 🎤 TtsPanel 多 voice 试听浮按 | 右下角 [tts] mono 浮按 + 8 个中文 voice + localStorage 默认 | ✅ |
+| **阶段 64** | 🎙 fasterwhisper ASR endpoint | POST /api/asr/whisper 上传音视频 → segments 带时间戳;base 模型按需下载 ~145MB | ✅ |
+| **阶段 65** | 🎨 UI 设计四环 · Hero 重做 + 未来主义字体 | JetBrains Mono + grain-grid + 数字 stat 横排 + 锐字 h1 + 紫光晕 | ✅ |
+| **阶段 66** | ✨ Refine · lift-hover 蔓延 | QuickMake StepRow + PublishPack 平台卡 + CycleOutput Block 标签 mono | ✅ |
+| **阶段 67** | ⌨️ 3 浮按 mono uppercase + lift | [image] / [tts] / model 一字排开 | ✅ |
+| **阶段 68** | 💻 Hero 终端命令风 sub-line | 深色 mono 块 + iris 紫光标 ▌ 闪烁 | ✅ |
+| **阶段 69** | 🎬 nav mono + tab spring underline | framer-motion layoutId 弹簧滑动 + iris glow | ✅ |
+| **阶段 70** | 🌊 Tab 切换 fade/slide 动画 | AnimatePresence mode=wait + cubic-bezier | ✅ |
+| **阶段 71** | 🔢 Stat 数字 count-up 入场 | framer-motion animate(0→target) · 1.4s · 上瘾微反馈 | ✅ |
+| **阶段 72** | ✨ 4 能力卡 stagger 入场 | parent variants staggerChildren 0.08 + delay 0.15 · 节奏感对齐 | ✅ |
 
 ---
 
