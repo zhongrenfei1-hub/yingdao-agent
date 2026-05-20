@@ -173,7 +173,7 @@ function isGreetingOrPing(text: string): boolean {
   return false;
 }
 
-const CONFIRM_PATTERNS = /^(行|好|确认|通过|ok|可以|没问题|approve|yes|同意|对|嗯|去吧|开始|继续)/i;
+const CONFIRM_PATTERNS = /^(行|好|确认|通过|ok|可以|没问题|approve|yes|同意|对|嗯|去吧|开始|继续|开干|启动|启|gan|go|按这个|就这个|没毛病|可|是|要|搞起|来|冲|干|done)/i;
 const REJECT_PATTERNS = /^(不行|退回|重做|reject|修改|改一下|不好|差|换)/i;
 const SKIP_PATTERNS = /^(跳过|skip|算了|不用了|下一步)/i;
 const PUBLISH_PATTERNS = /(已发布|发了|已经发|published)/i;
@@ -571,27 +571,9 @@ export class LoopChatController {
       this.setStatus('idle');
 
       if (reply.brief) {
-        // 凑齐了,push brief 卡 + 确认按钮
+        // 凑齐了,push brief 卡(不带按钮,直接走文字确认更稳)
         this.pendingBrief = reply.brief;
-        const briefGoal = reply.brief.summary || reply.brief.topic;
-        this.pushMessages([
-          aiMsg(formatBriefMarkdown(reply.brief), 'text', {
-            actions: [
-              {
-                id: 'confirm-brief',
-                label: '✓ 按这个开干',
-                variant: 'primary',
-                action: { type: 'start_loop', payload: { goal: briefGoal } },
-              },
-              {
-                id: 'tweak-brief',
-                label: '✎ 我要改',
-                variant: 'ghost',
-                action: { type: 'free_text', payload: { text: '' } },
-              },
-            ],
-          }),
-        ]);
+        this.pushMessages([aiMsg(formatBriefMarkdown(reply.brief))]);
         return;
       }
 

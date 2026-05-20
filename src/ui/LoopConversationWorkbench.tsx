@@ -10,6 +10,7 @@ import type { LoopChatSession, UserAction } from '../protocol/types';
 import type { RuntimeState } from '../hooks/useRuntimeStatus';
 import ChatBubble from './ChatBubble';
 import VideoPreviewPanel from './VideoPreviewPanel';
+import CycleOutputPanel from './CycleOutputPanel';
 
 interface LoopConversationWorkbenchProps {
   runtime: RuntimeState;
@@ -125,7 +126,10 @@ export default function LoopConversationWorkbench({ runtime }: LoopConversationW
     const controller = new LoopChatController(config, (updated) => setSession({ ...updated }), locale);
     controllerRef.current = controller;
     setSession(controller.getSession());
-  }, [config, locale]);
+    // 依赖用 id 不用 config 对象引用 —— ALL_LOOP_CONFIGS.find 每次 render 返回新引用
+    // 会让 controller 频繁重建,所有 instance 字段(包括 PM 访谈的 pendingBrief)被清零
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConfigId, locale]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -168,7 +172,7 @@ export default function LoopConversationWorkbench({ runtime }: LoopConversationW
   if (!config) return null;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px_280px]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
       <main className="min-w-0 rounded-2xl border border-border-cream bg-white/65 backdrop-blur-sm">
         <div className="flex flex-col gap-3 border-b border-border-cream px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -241,19 +245,18 @@ export default function LoopConversationWorkbench({ runtime }: LoopConversationW
         </div>
       </main>
 
-      {/* 中列:composition 预览(xl 屏才显示,小屏堆到底部) */}
-      <aside className="space-y-4 hidden xl:block">
-        <VideoPreviewPanel />
-      </aside>
-
-      {/* 右列:loop 进度 + 记忆 */}
-      <aside className="space-y-4">
-        <CycleMap configId={activeConfigId} />
-        <MemoryShelf employeeId={config.employeeId} />
-        {/* lg 屏(无中列时)在右侧加上 video preview */}
-        <div className="xl:hidden">
-          <VideoPreviewPanel />
-        </div>
+      {/* 右列:本轮产出聚合面板 — 一眼看到 cycle 状态 + brief + 任务 + 视频 + 发布包 */}
+      <aside className="space-y-3">
+        <CycleOutputPanel configId={activeConfigId} />
+        {/* 折叠区:旧的 cycle map + 记忆架 + video preview(开发用) */}
+        <details className="rounded-2xl border border-border-cream bg-white/50 px-3 py-2 text-xs">
+          <summary className="cursor-pointer text-stone-gray hover:text-near-black">⚙️ 进阶视图(老布局)</summary>
+          <div className="mt-2 space-y-3">
+            <CycleMap configId={activeConfigId} />
+            <MemoryShelf employeeId={config.employeeId} />
+            <VideoPreviewPanel />
+          </div>
+        </details>
       </aside>
     </div>
   );
