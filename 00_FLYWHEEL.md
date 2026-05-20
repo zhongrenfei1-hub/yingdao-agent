@@ -93,6 +93,19 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | **阶段 15** | 📦 一键发布包 | `short-video-publish-packager` 端到端落地:多平台结构化 JSON + 合规清单 + 24h 观察项 + PublishPackPanel UI + 一键复制 | ✅ |
 | **阶段 16** | 🚀 快速制作工作台 | 跟 Loop chat-first 并列的"快速制作"tab:输入 → 4 步串行(脚本/AI 提示词/混剪/发布包)→ 视频+发布包产出,跳过 cycle 抽象 | ✅ |
 | **阶段 17** | 📁 本地素材真接入混剪 | `/api/assets/upload` 多文件 multipart(busboy)落到 `local-asset-remix/assets/uploads/<sid>/`;composition 加 3 个 URL variables;render middleware 根据 assetPaths 切 composition;Workbench 加上传区(拖拽 + 选文件 + 3 槽位 + 大小/类型校验)| ✅ |
+| **阶段 18a** | 🎨 VideoPreviewPanel 视觉重做 | "鬼模板"→ 浅色 + iris 紫 accent + 友好空状态,色板局限在文件内不污染影刀 warm 全局 | ✅ |
+| **阶段 19** | 🔌 浏览器里直接填 API key | RuntimeDropdown 加 4 预设 + 4 输入框 + 测试连接 + 保存启用,localStorage 存 customRuntime;ai-client 优先用 customRuntime;Eye 切换、ErrorBoundary 兜底崩溃 | ✅ |
+| **阶段 19b/19c** | 🌐 真大模型接入加固 | translate="no" 阻止翻译插件改 DOM 让 React 崩;customRuntime 失败 throw 不悄悄 demo;testCustomRuntime 列真实可用 model;Gemini 预设默认换 gemini-3.5-flash | ✅ |
+| **阶段 20** | 🤖 PM 产品经理访谈流 | 用户进来不直接当 goal,AI 反问主题/受众/卖点/平台/调性 → brief → 用户回「开干」启 cycle;LoopChatController interview state in-memory,useEffect 依赖修 [activeConfigId, locale] 避免 controller 重建丢 state | ✅ |
+| **阶段 21** | 🖼️ 文章配图爬虫 | vite middleware /api/scrape/images?q=... 纯 HTTP + cheerio 解析 Bing 图片;ImageScrapePanel 浮按 + 24 图网格 + 点缩略图复制原图 URL;镜像零增重(不用 Puppeteer/Python) | ✅ |
+| **阶段 22** | 🗂️ CycleOutputPanel 产出聚合 | Loop 工作台中右两列合并为紫色"本轮产出"大面板:cycle stage / 目标 / 5 任务进度 / 视频 / 发布包,一眼看到本轮产物;老的 cycle map + memory shelf 折叠到"⚙️ 进阶视图" | ✅ |
+| **阶段 23** | 🐳 Docker 渲染坑修通 | hyperframes 0.6.12 在 docker puppeteer launch 失败 → 装 chrome-headless-shell + symlink 到 /usr/local/bin/hyperframes-browser;修 docker-compose env override;杀宿主机抢端口的 vite;改默认 composition 用更稳的 short-video-demo(5.3s);end-to-end HTTP 200 / 5.3s mp4 出片 | ✅ |
+| **阶段 24** | 🧪 smoke test 脚本 | scripts/smoke-test.sh 一键跑 7 项验证(health / 首页 / runtime/scan / scrape/images / assets/upload / video/render),docker 起服后 bash 一行验证全栈活着 | ✅ |
+| **阶段 25** | ⏱ Step elapsed timer | QuickMakeWorkbench step running 时显示已运行秒数 + ETA 文案,解决"等 4 分钟没反馈"痛点 | ✅ |
+| **阶段 26** | 📚 QUICK_START 文档 | docs/QUICK_START.zh-CN.md 5 分钟新手 onboarding:docker → 接 Gemini → 出片;清 stage-23 残留 debug log | ✅ |
+| **阶段 27** | 🤖 CI hyperframes lint job | .github/workflows/ci.yml 补 4 个 composition 的 hyperframes lint 0/0 check | ✅ |
+| **阶段 28** | ⏱ CycleOutputPanel task timer | Loop 工作台 5 个 task 也加 elapsed timer,前端轻量记 task running 起始时间不动 core 类型 | ✅ |
+| **阶段 29** | 💚 /api/_health + docker healthcheck | health endpoint + compose healthcheck 每 30s 自动 ping,失败 3 次 unhealthy → restart 介入 | ✅ |
 
 ---
 
