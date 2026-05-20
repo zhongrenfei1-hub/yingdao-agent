@@ -447,26 +447,8 @@ export class LoopChatController {
       messages: [
         aiMsg(
           locale === 'zh-CN'
-            ? `👋 我是你的${getLoopConfigLabel(config.id, locale)}助手。\n\n${getLoopConfigDescription(config.id, locale)}\n\n告诉我这周的内容增长目标，我来帮你启动闭环。`
-            : `👋 I am your ${getLoopConfigLabel(config.id, locale)} assistant.\n\n${getLoopConfigDescription(config.id, locale)}\n\nTell me the content growth goal for this week, and I will start the loop.`,
-          'text',
-          {
-            actions: [
-              {
-                id: 'start-seo',
-                label: locale === 'zh-CN' ? '帮我做本周增长' : 'Plan this week\'s growth loop',
-                variant: 'primary',
-                action: {
-                  type: 'start_loop',
-                  payload: {
-                    goal: locale === 'zh-CN'
-                      ? '这周帮我做一轮 SEO/GEO 内容增长'
-                      : 'Run a content growth loop about AI agent feedback loops this week',
-                  },
-                },
-              },
-            ],
-          },
+            ? `👋 我是影刀的 AI 产品经理。\n\n你打算做什么内容?直接告诉我一句话就行 ——\n\n· **产品** 比如 "我做了个 X 想推一下"\n· **服务** 比如 "我能帮 X 解决 Y"\n· **故事** 比如 "想讲 X 这件事"\n· **科普** 比如 "解释清楚 X"\n\n我会反问几轮搞清楚你的目标受众、卖点、平台、调性,出 brief,你回「开干」才启动 cycle。`
+            : `👋 I'm Yingdao's AI product manager.\n\nWhat are you making? Tell me in one line —\n\n· **Product** "I built X, want to promote it"\n· **Service** "I help X solve Y"\n· **Story** "Want to tell the X story"\n· **Knowledge** "Explain X clearly"\n\nI'll interview you a few rounds about audience/selling points/platform/tone, draft a brief, then start the cycle when you say "开干".`,
         ),
       ],
       status: 'idle',
