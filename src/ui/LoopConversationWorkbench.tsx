@@ -229,13 +229,13 @@ export default function LoopConversationWorkbench({ runtime }: LoopConversationW
                 }}
                 placeholder={session?.status === 'idle' ? t('chat.placeholderIdle') : t('chat.placeholderRunning')}
                 rows={1}
-                className="flex-1 resize-none rounded-xl border border-border-cream bg-ivory px-4 py-2.5 text-sm text-near-black outline-none focus:border-terracotta/40 placeholder:text-stone-gray"
+                className="flex-1 resize-none rounded-xl border border-border-cream bg-ivory px-4 py-2.5 text-sm text-near-black outline-none focus:border-iris-400 placeholder:text-stone-gray"
               />
               <button
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={!inputText.trim() || sending}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-terracotta text-white transition hover:bg-terracotta/90 disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-iris-600 text-white transition hover:bg-iris-700 disabled:opacity-40"
               >
                 {sending ? <RefreshCw size={18} className="animate-spin" /> : <ArrowUp size={18} />}
               </button>
