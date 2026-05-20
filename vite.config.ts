@@ -603,6 +603,8 @@ function scriptToHyperframesVariables(script: ScriptInput | undefined): Record<s
   };
 }
 
+const HF_RENDER_TIMEOUT_MS = Number(process.env.YINGDAO_RENDER_TIMEOUT_MS ?? 10 * 60 * 1000);
+
 function runHyperframes(args: string[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const browserPath = detectHyperframesBrowser();
@@ -613,13 +615,24 @@ function runHyperframes(args: string[], cwd: string): Promise<void> {
     // stdio inherit stdout 让 hyperframes 进度直接进 vite log,便于诊断
     const child = spawn('npx', args, { cwd, env, stdio: ['ignore', 'inherit', 'pipe'] });
     let stderr = '';
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGKILL');
+      reject(new Error(`hyperframes 超时(${HF_RENDER_TIMEOUT_MS}ms)被强杀,Chrome 可能 hang 了`));
+    }, HF_RENDER_TIMEOUT_MS);
     child.stderr?.on('data', (chunk) => {
       const s = chunk.toString();
       stderr += s;
       process.stderr.write(s); // 同时 echo 到 vite log
     });
-    child.on('error', reject);
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
     child.on('close', (code) => {
+      clearTimeout(timer);
+      if (timedOut) return; // 已经 reject 过了
       if (code === 0) resolve();
       else reject(new Error(`hyperframes exited with code ${code}: ${stderr.slice(-800)}`));
     });
