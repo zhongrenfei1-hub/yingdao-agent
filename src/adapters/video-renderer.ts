@@ -26,6 +26,12 @@ export interface ScriptJson {
   scenes?: ScriptScene[];
   cta?: string;
   risks?: string[];
+  /** PM 访谈合成的目标受众(stage-20+);影响 composition eyebrow + LLM 后续语气 */
+  audience?: string;
+  /** PM 访谈合成的调性(stage-20+);影响 voiceover 风格 */
+  tone?: string;
+  /** PM 访谈合成的核心卖点(1-3 个);写脚本时强制覆盖 */
+  sellingPoints?: string[];
 }
 
 export interface VideoRenderInput {
