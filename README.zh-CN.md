@@ -7,11 +7,13 @@
 
 ![影刀渲染样品封面 · 9:16](./docs/sample-output/yingdao-sample.jpg)
 
+[![Release v0.1.0](https://img.shields.io/badge/release-v0.1.0-7c3aed.svg)](https://github.com/zhongrenfei1-hub/yingdao-agent/releases/tag/v0.1.0)
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-self--hosted-2496ed.svg)](./SELF_HOST.md)
 
-[发布笔记 stage-15~23](./RELEASE_NOTES.zh-CN.md) | [Self-Host 指南](./SELF_HOST.md) | [完整 PRD](./YINGDAO_AGENT_PRD.zh-CN.md) | [飞轮日志](./00_FLYWHEEL.md)
+[发布笔记 stage-15~44](./RELEASE_NOTES.zh-CN.md) | [5 分钟新手 onboarding](./docs/QUICK_START.zh-CN.md) | [PRD 5 分钟版](./docs/PRD_SUMMARY.zh-CN.md) | [Self-Host](./SELF_HOST.md) | [飞轮日志](./00_FLYWHEEL.md)
 
 ---
 
