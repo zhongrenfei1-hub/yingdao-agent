@@ -177,8 +177,8 @@ function CycleContent({ cycle }: { cycle: NonNullable<ReturnType<typeof useLoopS
 
 function Block({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-warm-sand/20 p-2.5" style={{ background: IRIS_SOFT }}>
-      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide" style={{ color: IRIS }}>
+    <div className="rounded-xl bg-warm-sand/20 p-2.5 transition" style={{ background: IRIS_SOFT }}>
+      <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: IRIS }}>
         {label}
       </p>
       {children}
