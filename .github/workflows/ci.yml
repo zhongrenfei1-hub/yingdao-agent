@@ -30,3 +30,32 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  hyperframes-lint:
+    name: HyperFrames composition lint (0/0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # composition lint 需要 chromium + 中文字体(字幕不掉字)
+      - name: Install chromium + Noto CJK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-color-emoji chromium-browser
+
+      - name: Lint short-video-demo
+        run: cd compositions/short-video-demo && npx --yes hyperframes@0.6.12 lint
+
+      - name: Lint short-video-pitch
+        run: cd compositions/short-video-pitch && npx --yes hyperframes@0.6.12 lint
+
+      - name: Lint local-asset-remix
+        run: cd compositions/local-asset-remix && npx --yes hyperframes@0.6.12 lint
+
+      - name: Lint weekly-stats
+        run: cd compositions/weekly-stats && npx --yes hyperframes@0.6.12 lint
