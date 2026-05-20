@@ -48,6 +48,7 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
+    "lint:compositions": "for d in compositions/short-video-demo compositions/short-video-pitch compositions/local-asset-remix compositions/weekly-stats; do echo \"\\n→ $d\"; (cd \"$d\" && npx --yes hyperframes@0.6.12 lint) || exit 1; done",
     "smoke": "bash scripts/smoke-test.sh",
     "sample": "bash scripts/generate-sample.sh",
     "docker:up": "caffeinate -i docker compose up -d --build",
