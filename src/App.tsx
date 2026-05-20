@@ -25,35 +25,52 @@ function AppShell() {
   }, [registerLoop]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-      <header className="mb-4 rounded-2xl border border-border-cream bg-white/75 px-4 py-4 backdrop-blur-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-serif text-2xl font-bold text-near-black">Centaur Loop</h1>
-              <span className="badge"><SlidersHorizontal size={12} /> Chat-first Workbench</span>
-            </div>
-            <p className="mt-1 text-sm font-medium text-near-black">{t('app.tagline')}</p>
-            <p className="mt-1 text-xs leading-5 text-olive-gray">{t('app.thesis')}</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <a href="https://github.com/finewood2008/centaur-loop" target="_blank" rel="noreferrer" className="btn-ghost">
-              <Github size={15} /> {t('app.github')}
-            </a>
-            <a href="https://github.com/finewood2008/centaur-loop#readme" target="_blank" rel="noreferrer" className="btn-ghost">
-              <BookOpen size={15} /> {t('app.docs')}
-            </a>
-            <button type="button" onClick={toggleLocale} className="btn-ghost">
-              <Languages size={15} /> {t('app.language')}
-            </button>
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
+      <header className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img
+            src="/yingdao-logo.png"
+            alt="影刀"
+            className="h-10 w-10 shrink-0"
+            style={{ filter: 'drop-shadow(0 4px 12px rgba(124,58,237,0.25))' }}
+          />
+          <div>
+            <h1 className="text-lg font-bold leading-none text-near-black">影刀</h1>
+            <p className="mt-0.5 text-[10px] text-stone-gray">Yingdao Agent · v0.1.0</p>
           </div>
         </div>
+
+        <nav className="flex flex-wrap items-center gap-1">
+          <a
+            href="https://github.com/zhongrenfei1-hub/yingdao-agent"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-stone-gray transition hover:bg-white/60 hover:text-near-black"
+          >
+            <Github size={14} /> GitHub
+          </a>
+          <a
+            href="https://github.com/zhongrenfei1-hub/yingdao-agent#readme"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-stone-gray transition hover:bg-white/60 hover:text-near-black"
+          >
+            <BookOpen size={14} /> 文档
+          </a>
+          <button
+            type="button"
+            onClick={toggleLocale}
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-stone-gray transition hover:bg-white/60 hover:text-near-black"
+          >
+            <Languages size={14} /> {t('app.language')}
+          </button>
+        </nav>
       </header>
 
       <HeroBanner />
 
-      <div className="mb-4 flex items-center gap-1 rounded-2xl border border-border-cream bg-white/75 p-1 backdrop-blur-sm">
+      {/* underline 风格 tab,不是 pill 填充 — 更现代 */}
+      <div className="mb-5 flex items-center gap-1 border-b" style={{ borderColor: 'rgba(124,58,237,0.15)' }}>
         <TabButton
           active={tab === 'quick'}
           onClick={() => setTab('quick')}
@@ -66,7 +83,7 @@ function AppShell() {
           onClick={() => setTab('loop')}
           icon={<MessagesSquare size={14} />}
           label="Loop 工作台"
-          hint="跟 AI 对话推进增长闭环"
+          hint="PM 访谈 → 自动 cycle"
         />
       </div>
 
@@ -95,17 +112,16 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
-        active
-          ? 'bg-terracotta text-white shadow-sm'
-          : 'text-olive-gray hover:bg-warm-sand/40'
-      }`}
+      className="relative flex items-center gap-2 px-4 py-3 text-sm transition"
+      style={{
+        color: active ? '#7c3aed' : '#6B6B5E',
+        borderBottom: active ? '2px solid #7c3aed' : '2px solid transparent',
+        marginBottom: '-1px',
+      }}
     >
-      <span className={active ? 'text-white' : 'text-terracotta'}>{icon}</span>
+      <span style={{ color: active ? '#7c3aed' : '#9B9B8F' }}>{icon}</span>
       <span className="font-medium">{label}</span>
-      <span className={`hidden text-[10px] sm:inline ${active ? 'text-white/80' : 'text-stone-gray'}`}>
-        · {hint}
-      </span>
+      <span className="hidden text-[10px] text-stone-gray sm:inline">· {hint}</span>
     </button>
   );
 }

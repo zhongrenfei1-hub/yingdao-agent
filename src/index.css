@@ -2,7 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Centaur Loop Engine 设计系统 ── */
+/* ── 影刀全局视觉 · stage-53 重做 · 浅紫氛围 + 大圆角 + 宽松 ── */
+
+:root {
+  --iris-50: #faf5ff;
+  --iris-100: #f3eaff;
+  --iris-200: #ddd6fe;
+  --iris-500: #8b5cf6;
+  --iris-600: #7c3aed;
+  --iris-700: #6d28d9;
+  --iris-soft: rgba(124, 58, 237, 0.08);
+  --iris-ring: rgba(124, 58, 237, 0.18);
+}
+
+html,
+body,
+#root {
+  background:
+    radial-gradient(at 0% 0%, var(--iris-50) 0%, transparent 50%),
+    radial-gradient(at 100% 0%, var(--iris-100) 0%, transparent 55%),
+    radial-gradient(at 100% 100%, var(--iris-50) 0%, transparent 50%),
+    linear-gradient(180deg, #fffefb 0%, #faf5ff 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* 现代化卡片:iris 紫边 + 半透明白底,跟 hero 渐变和谐共生 */
+@layer components {
+  .card-iris {
+    @apply rounded-2xl border bg-white/85 backdrop-blur-sm shadow-[0_4px_24px_-12px_rgba(124,58,237,0.18)];
+    border-color: var(--iris-ring);
+  }
+  .btn-iris-primary {
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-sm transition
+           hover:opacity-90 active:scale-[0.98]
+           disabled:cursor-not-allowed disabled:opacity-50;
+    background: var(--iris-600);
+  }
+}
+
+/* ── 兼容旧 Centaur Loop Engine 设计系统(渐进迁移) ── */
 
 @layer components {
   /* 玻璃卡片 */
