@@ -106,6 +106,32 @@ BUILD → TEST → FIX → SHIP → 回 BUILD
 | **阶段 27** | 🤖 CI hyperframes lint job | .github/workflows/ci.yml 补 4 个 composition 的 hyperframes lint 0/0 check | ✅ |
 | **阶段 28** | ⏱ CycleOutputPanel task timer | Loop 工作台 5 个 task 也加 elapsed timer,前端轻量记 task running 起始时间不动 core 类型 | ✅ |
 | **阶段 29** | 💚 /api/_health + docker healthcheck | health endpoint + compose healthcheck 每 30s 自动 ping,失败 3 次 unhealthy → restart 介入 | ✅ |
+| **阶段 30** | 📋 飞轮日志补齐 18a~29 | 之前主表停在 17,补齐 12 圈到 29 | ✅ |
+| **阶段 31~32** | 🎯 PM brief 数据贯穿全链 | ScriptInput / ScriptJson 加 audience/tone/sellingPoints 字段;short-video-script-writer LLM prompt 强制使用 brief 数据写脚本 | ✅ |
+| **阶段 33** | ⏱ render 超时强杀 | YINGDAO_RENDER_TIMEOUT_MS 默认 10min,Chrome hang → SIGKILL,前端立刻看到失败而不是傻等 | ✅ |
+| **阶段 34** | 📚 SELF_HOST troubleshooting | 6 项 docker 排错文档化(Chrome launch 失败 / --docker 误用 / 端口冲突 / Chrome crash / 翻译插件白屏 等)| ✅ |
+| **阶段 35** | 🚀 image scrape 5min 缓存 | 防 Bing 反爬 + 重复查询秒返;Map 缓存 query|limit 复合 key,超 50 条 LRU 丢弃 | ✅ |
+| **阶段 36** | 🎬 样品生成器 | scripts/generate-sample.sh:跑 /api/video/render → 拷产物到 docs/sample-output/ + 自动写 README;GitHub 访客可直接看 637KB 真 mp4 | ✅ |
+| **阶段 37~38** | 🏷 README sample link + npm scripts | npm run smoke / sample / docker:up/down/logs;README 内联 sample 封面 | ✅ |
+| **阶段 39** | 🔌 ScriptJson 跟 ScriptInput 类型对齐 | 完整链路类型贯穿,不再有"类型在中间断了"的潜在 bug | ✅ |
+| **阶段 40** | 📚 PRD 5 分钟版 | docs/PRD_SUMMARY.zh-CN.md 给"想用/想投/想抄"的人 5 分钟读完 | ✅ |
+| **阶段 41** | 🤖 Loop 工作台默认欢迎语换影刀语境 | 去掉 centaur-loop 来的 SEO 旧文案,改成 PM 风格 + 4 种内容类型示例 | ✅ |
+| **阶段 42** | 🎨 README inline sample 封面 | GitHub 首页加载就看到 9:16 真实渲染封面 | ✅ |
+| **阶段 43~44** | 📋 PR template + CONTRIBUTING 影刀飞轮约定 | 外部贡献者一看就懂 commit 格式 + 飞轮硬性动作 | ✅ |
+| **阶段 45** | 🏷 README v0.1.0 release badge + Docker badge | quick links 覆盖 QUICK_START / PRD_SUMMARY / Self-Host | ✅ |
+| **阶段 46** | 🧹 .gitignore 补 dev 产物 | .claude / chrome-headless-shell / assets/uploads / .cache | ✅ |
+| **阶段 47** | 🧪 vitest 单测 + publishPack 11 项 + 接 CI | 工程基础设施,1.4s 全过 | ✅ |
+| **阶段 48** | 📋 RELEASE_NOTES 补 stage-24~47 | 24 圈完整记录 | ✅ |
+| **阶段 49** | 🧪 npm run lint:compositions | 本地跑 4 个 composition lint,catch composition HTML 改坏 | ✅ |
+| **阶段 50** | ⚡ pitch fps 30→24 | docker software WebGL 帧数 -20%,稳定性提升 | ✅ |
+| **阶段 51** | ✨ HeroBanner | 渐变 hero + 4 能力卡 + iris 紫色板 | ✅ |
+| **阶段 52** | 🐱 影刀 logo(白猫咪 + 紫色腮红) | 从用户自己另一 repo 共享 brand asset;HeroBanner + favicon | ✅ |
+| **阶段 53** | 🎨 整体视觉重做 | 浅紫氛围渐变 + 大 logo header + underline tab + CSS vars | ✅ |
+| **阶段 54~57** | 🎯 设计 token 跟火花视觉对齐 | iris 紫 10 阶 + shadcn 圆角阶梯 + 主操作色 terracotta → iris-600 | ✅ |
+| **阶段 58** | 🎙 Edge TTS endpoint | Dockerfile 加 python3 + edge-tts;POST /api/tts/edge → 写 mp3 到 public/generated;实测 11 字中文 6s 出 19KB mp3 | ✅ |
+| **阶段 59** | 📤 合规 deep link 自动发布 | PublishPackPanel 每平台"📤 发到 XX"按钮:复制文案 + 跳官方创作者后台;6 个平台支持 | ✅ |
+| **阶段 60** | 🎬 Edge TTS 接 pitch composition 旁白 | composition narrationUrl variable + middleware 调 TTS 生成 mp3 → hyperframes 注入;edge-tts 失败 fallback Kokoro | ✅ |
+| **阶段 61** | 📋 RELEASE_NOTES 补 stage-48~60 | 13 圈产出完整登记 | ✅ |
 
 ---
 
