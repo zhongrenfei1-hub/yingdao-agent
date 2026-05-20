@@ -1,14 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN" translate="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 告诉 Google Translate / 沉浸式翻译 / DeepL 等扩展不要翻译这页:
+         它们会改 DOM 文本节点,导致 React 找不到自己之前 render 的节点抛 insertBefore 错。 -->
+    <meta name="google" content="notranslate" />
+    <meta name="robots" content="notranslate" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
     <title>Centaur Loop Workbench</title>
   </head>
-  <body class="bg-parchment text-near-black antialiased">
+  <body class="bg-parchment text-near-black antialiased" translate="no">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

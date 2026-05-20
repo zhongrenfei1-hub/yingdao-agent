@@ -7,6 +7,7 @@ import { I18nProvider, useI18n } from './i18n';
 import { useRuntimeStatus } from './hooks/useRuntimeStatus';
 import { BookOpen, Github, Languages, MessagesSquare, Rocket, SlidersHorizontal } from 'lucide-react';
 import RuntimeDropdown from './ui/RuntimeDropdown';
+import ImageScrapePanel from './ui/ImageScrapePanel';
 
 type WorkbenchTab = 'quick' | 'loop';
 
@@ -69,6 +70,7 @@ function AppShell() {
       {tab === 'quick' ? <QuickMakeWorkbench /> : <LoopConversationWorkbench runtime={runtime} />}
 
       <RuntimeDropdown runtime={runtime} floating />
+      <ImageScrapePanel floating />
     </div>
   );
 }

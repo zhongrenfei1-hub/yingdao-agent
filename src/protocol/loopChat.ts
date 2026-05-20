@@ -10,6 +10,7 @@
 import { useLoopStore } from '../core/loopStore';
 import { advanceLoop } from '../core/loopEngine';
 import { submitQuickFeedback } from '../core/feedbackCollector';
+import { getClientAsync, extractModelText } from '../adapters/ai-client';
 import type { CentaurLoopConfig, LoopCycle, SpiritBubblePayload } from '../core/types';
 import { getLoopConfigDescription, getLoopConfigLabel, getOutputLanguageInstruction, type Locale } from '../i18n';
 import type {
@@ -19,6 +20,123 @@ import type {
   QuickAction,
   UserAction,
 } from './types';
+
+// ─── PM Interview · 产品经理访谈 ─────────────────────────────
+//
+// 用户进来 → 影刀扮 PM 反问需求 → 凑齐信息 → 输出 brief → 用户确认 → 才启 cycle。
+// 走当前 ai-client(优先 customRuntime,比如用户配的 Gemini)。
+
+interface InterviewTurn {
+  role: 'pm' | 'user';
+  text: string;
+}
+
+interface PMBrief {
+  topic: string;
+  audience: string;
+  selling_points: string[];
+  platforms: string[];
+  tone: string;
+  summary: string; // 用作 cycle goal
+}
+
+interface InterviewReply {
+  next_question?: string;
+  brief?: PMBrief;
+  /** 当 LLM 直接降级失败时,这里给一个兜底文案,UI 用 next_question 流程展示 */
+  error?: string;
+}
+
+const INTERVIEW_SYSTEM_PROMPT = `你是"影刀"的产品经理。你的工作是在用户开始做短视频前,先用简短对话搞清楚需求。
+
+风格:像微信对话,中文,简洁,每条不超过 40 字。绝对不啰嗦,不寒暄。
+
+需要搞清楚的关键信息(已知的别再问):
+1. 视频主题 / 想推什么(产品 / 服务 / 故事 / 知识)
+2. 目标受众(给谁看,什么人群)
+3. 核心卖点(1-3 个亮点)
+4. 投放平台(抖音 / TikTok / 小红书 / 快手 / B 站)
+5. 调性(专业 / 活泼 / 搞笑 / 治愈 / 高级 / 沉浸)
+
+规则:
+- 每轮只问 1 个最重要的问题,别一次问 3 个
+- 用户回答含糊就追问一下;给的够具体就推进下一个
+- 凑齐 3-5 项后(至少 1+2+3 必须有),输出 brief
+
+输出格式:严格 JSON,不要 markdown 代码块包裹,不要任何额外文字。
+
+如果还要继续问:
+{"next_question": "你说的那个 XX 主要是给谁看的?"}
+
+如果可以收口了:
+{"brief": {
+  "topic": "...",
+  "audience": "...",
+  "selling_points": ["...", "..."],
+  "platforms": ["..."],
+  "tone": "...",
+  "summary": "为 <audience> 在 <platforms> 做一条关于 <topic> 的短视频,突出 <selling_points>,调性 <tone>"
+}}`;
+
+function formatInterviewHistory(history: InterviewTurn[]): string {
+  return history.map((t) => `${t.role === 'pm' ? 'PM' : '用户'}: ${t.text}`).join('\n');
+}
+
+function parseInterviewReply(raw: string): InterviewReply {
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) return { error: 'LLM 返回不是 JSON' };
+  try {
+    const obj = JSON.parse(match[0]) as Partial<InterviewReply>;
+    if (obj.brief) {
+      const b = obj.brief as Partial<PMBrief>;
+      const brief: PMBrief = {
+        topic: String(b.topic ?? ''),
+        audience: String(b.audience ?? ''),
+        selling_points: Array.isArray(b.selling_points) ? b.selling_points.map(String) : [],
+        platforms: Array.isArray(b.platforms) ? b.platforms.map(String) : [],
+        tone: String(b.tone ?? ''),
+        summary: String(b.summary ?? ''),
+      };
+      if (!brief.summary && brief.topic) {
+        brief.summary = `做一条关于「${brief.topic}」的短视频`;
+      }
+      return { brief };
+    }
+    if (typeof obj.next_question === 'string' && obj.next_question.trim()) {
+      return { next_question: obj.next_question.trim() };
+    }
+    return { error: '返回 JSON 缺 next_question 或 brief' };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { error: `JSON parse 失败: ${msg}` };
+  }
+}
+
+async function runPMInterview(history: InterviewTurn[]): Promise<InterviewReply> {
+  const client = await getClientAsync();
+  const prompt = [INTERVIEW_SYSTEM_PROMPT, '', '对话历史:', formatInterviewHistory(history)].join('\n');
+  const raw = await client.models.invoke({ prompt });
+  const text = extractModelText(raw);
+  if (!text) return { error: '模型未返回文本' };
+  return parseInterviewReply(text);
+}
+
+function formatBriefMarkdown(brief: PMBrief): string {
+  return [
+    '**📋 需求 brief**',
+    '',
+    `**主题** · ${brief.topic || '—'}`,
+    `**受众** · ${brief.audience || '—'}`,
+    `**卖点** · ${brief.selling_points.join(' / ') || '—'}`,
+    `**平台** · ${brief.platforms.join(' / ') || '—'}`,
+    `**调性** · ${brief.tone || '—'}`,
+    '',
+    `> ${brief.summary || ''}`,
+    '',
+    '✅ **回复「开干」** 就按这个启动 cycle',
+    '✎ 或者告诉我哪儿要改,我重新规划',
+  ].join('\n');
+}
 
 // ─── 工具函数 ────────────────────────────────────────────────
 
@@ -43,6 +161,17 @@ function humanMsg(text: string): LoopMessage {
 }
 
 // ─── 意图解析器 ──────────────────────────────────────────────
+
+// 招呼/试探类输入 — 不该当 cycle goal 触发完整规划
+const GREETING_PATTERNS = /^(hi+|hello+|hey+|yo+|你好+|您好|哈喽+|哈罗|嗨+|hola|喂|在|在吗|在不在|有人吗|test|测试|ping|\?|\?|请问|你是谁)[?\.!。!?\s]*$/i;
+
+function isGreetingOrPing(text: string): boolean {
+  const t = text.trim();
+  if (t.length === 0) return true;
+  if (t.length <= 8 && GREETING_PATTERNS.test(t)) return true;
+  if (/^[?。?!.\s]+$/.test(t)) return true;
+  return false;
+}
 
 const CONFIRM_PATTERNS = /^(行|好|确认|通过|ok|可以|没问题|approve|yes|同意|对|嗯|去吧|开始|继续)/i;
 const REJECT_PATTERNS = /^(不行|退回|重做|reject|修改|改一下|不好|差|换)/i;
@@ -299,6 +428,9 @@ export class LoopChatController {
   private config: CentaurLoopConfig;
   private onUpdate: (session: LoopChatSession) => void;
   private locale: Locale;
+  // PM Interview 上下文(只活在内存,不入 store;component unmount 就丢)
+  private interviewHistory: InterviewTurn[] | null = null;
+  private pendingBrief: PMBrief | null = null;
 
   constructor(
     config: CentaurLoopConfig,
@@ -384,14 +516,117 @@ export class LoopChatController {
     const cycle = this.getCycle();
     const currentStage = cycle?.stage ?? 'idle';
 
-    // 如果没有活跃循环，当作启动指令
+    // 如果没有活跃循环 → 走 PM 访谈流(不再直接 startCycle)
     if (!cycle || currentStage === 'cycle_complete') {
-      await this.startCycle(text);
+      await this.continueInterview(text);
       return;
     }
 
     const intent = parseUserIntent(text, currentStage);
     await this.handleAction(intent);
+  }
+
+  // ── PM 访谈流 ───────────────────────────────────────────
+  // 用户进来 → AI 扮 PM 反问需求 → 凑齐 brief → 用户确认 → 才启 cycle
+  private async continueInterview(userText: string): Promise<void> {
+    // 已经有待确认的 brief,且用户回了"确认/开干"类的话 → 直接启 cycle(不再依赖按钮渲染)
+    if (this.pendingBrief && CONFIRM_PATTERNS.test(userText.trim())) {
+      const goal = this.pendingBrief.summary || this.pendingBrief.topic;
+      this.pendingBrief = null;
+      this.interviewHistory = null;
+      await this.startCycle(goal);
+      return;
+    }
+
+    // 首次招呼直接回引导,不消耗一次 LLM(也避免冷启动延迟)
+    if (this.interviewHistory === null && isGreetingOrPing(userText)) {
+      this.interviewHistory = []; // 标记进入访谈,后续直接走 LLM
+      this.pushMessages([
+        aiMsg(
+          [
+            '👋 我是影刀的产品经理。',
+            '在我们开始做之前,先简单聊几句搞清你想要的东西 ——',
+            '',
+            '**你想做的内容,大概是关于什么的?**',
+            '(产品 / 服务 / 故事 / 知识科普,一句话告诉我就行)',
+          ].join('\n'),
+        ),
+      ]);
+      return;
+    }
+
+    // 用户回答中,但 pendingBrief 已经在但用户给的不是确认 → 当成"我要改"
+    if (this.pendingBrief) {
+      this.pendingBrief = null; // 清旧 brief,继续访谈用新回答合成新 brief
+    }
+
+    // 把用户回答塞进访谈历史
+    if (this.interviewHistory === null) this.interviewHistory = [];
+    this.interviewHistory.push({ role: 'user', text: userText });
+
+    // 显示 typing 状态
+    this.setStatus('running');
+    try {
+      const reply = await runPMInterview(this.interviewHistory);
+      this.setStatus('idle');
+
+      if (reply.brief) {
+        // 凑齐了,push brief 卡 + 确认按钮
+        this.pendingBrief = reply.brief;
+        const briefGoal = reply.brief.summary || reply.brief.topic;
+        this.pushMessages([
+          aiMsg(formatBriefMarkdown(reply.brief), 'text', {
+            actions: [
+              {
+                id: 'confirm-brief',
+                label: '✓ 按这个开干',
+                variant: 'primary',
+                action: { type: 'start_loop', payload: { goal: briefGoal } },
+              },
+              {
+                id: 'tweak-brief',
+                label: '✎ 我要改',
+                variant: 'ghost',
+                action: { type: 'free_text', payload: { text: '' } },
+              },
+            ],
+          }),
+        ]);
+        return;
+      }
+
+      if (reply.next_question) {
+        this.interviewHistory.push({ role: 'pm', text: reply.next_question });
+        this.pushMessages([aiMsg(reply.next_question)]);
+        return;
+      }
+
+      // LLM 失败兜底
+      this.pushMessages([
+        aiMsg(
+          [
+            '⚠️ 我这边出了点小问题:' + (reply.error ?? '未知'),
+            '',
+            '你可以直接把目标整句告诉我,比如:',
+            '· 给独立开发者做一条「影刀本地混剪」的小红书,调性高级。',
+            '我直接按这个开干。',
+          ].join('\n'),
+        ),
+      ]);
+    } catch (e) {
+      this.setStatus('idle');
+      const msg = e instanceof Error ? e.message : String(e);
+      this.pushMessages([
+        aiMsg(
+          [
+            `⚠️ LLM 调用失败:${msg}`,
+            '',
+            '检查一下右下角的 Runtime 是不是真接通了大模型(没接通会一直走 demo / 报错)。',
+            '或者直接把完整目标整句给我,我跳过访谈直接开干。',
+          ].join('\n'),
+        ),
+      ]);
+    }
   }
 
   // ── 处理快捷按钮动作 ──────────────────────────────────────
@@ -403,7 +638,12 @@ export class LoopChatController {
     switch (action.type) {
       case 'start_loop': {
         const goal = action.payload?.goal ?? action.payload?.text ?? '';
-        if (goal) await this.startCycle(goal);
+        if (goal) {
+          // 启 cycle 前清 PM 访谈上下文,下一轮新 cycle 重新访谈
+          this.interviewHistory = null;
+          this.pendingBrief = null;
+          await this.startCycle(goal);
+        }
         return;
       }
 

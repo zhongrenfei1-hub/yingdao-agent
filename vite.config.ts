@@ -4,6 +4,7 @@ import path from 'path';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import Busboy from 'busboy';
+import * as cheerio from 'cheerio';
 
 function readRequestBody(req: import('http').IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -741,6 +742,98 @@ function assetUploadApiPlugin(): Plugin {
   };
 }
 
+// === Bing 图片搜索 scrape(给公众号文章配图)===
+//   纯 HTTP + cheerio,Bing iusc 元素的 `m` 属性是一个 JSON 字符串,带 murl(原图)+ turl(缩略图)+ purl(来源页)
+interface ScrapedImage {
+  url: string;          // 原图
+  thumb: string;        // 缩略图
+  source: string;       // 来源页
+  title: string;
+  width?: number;
+  height?: number;
+}
+
+async function scrapeBingImages(query: string, limit = 24): Promise<ScrapedImage[]> {
+  const q = encodeURIComponent(query);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const resp = await fetch(`https://www.bing.com/images/search?q=${q}&form=HDRSC2`, {
+      headers: {
+        'user-agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      },
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!resp.ok) throw new Error(`Bing HTTP ${resp.status}`);
+    const html = await resp.text();
+    const $ = cheerio.load(html);
+    const out: ScrapedImage[] = [];
+    $('a.iusc').each((_, el) => {
+      if (out.length >= limit) return;
+      const m = $(el).attr('m');
+      if (!m) return;
+      try {
+        const data = JSON.parse(m) as {
+          murl?: string;
+          turl?: string;
+          purl?: string;
+          t?: string;
+        };
+        const turl = data.turl ?? '';
+        const murl = data.murl ?? '';
+        if (!murl) return;
+        // 尺寸从兄弟元素的 data-* 拿
+        const sizeAttr = $(el).find('.img_info .nowrap').first().text().trim();
+        const sizeMatch = sizeAttr.match(/(\d+)\s*[x×]\s*(\d+)/);
+        out.push({
+          url: murl,
+          thumb: turl || murl,
+          source: data.purl ?? '',
+          title: (data.t ?? '').replace(/<[^>]+>/g, '').trim(),
+          width: sizeMatch ? parseInt(sizeMatch[1], 10) : undefined,
+          height: sizeMatch ? parseInt(sizeMatch[2], 10) : undefined,
+        });
+      } catch {
+        /* 跳过解析失败的条目 */
+      }
+    });
+    return out;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function imageScrapeApiPlugin(): Plugin {
+  return {
+    name: 'yingdao-image-scrape-api',
+    configureServer(server) {
+      server.middlewares.use('/api/scrape/images', async (req, res) => {
+        if (req.method !== 'GET') {
+          sendJson(res, 405, { error: 'Method not allowed' });
+          return;
+        }
+        try {
+          const url = new URL(req.url ?? '/', 'http://localhost');
+          const query = (url.searchParams.get('q') ?? '').trim();
+          const limit = Math.min(Number(url.searchParams.get('limit') ?? 24), 50);
+          if (!query) {
+            sendJson(res, 400, { error: 'q 参数必填' });
+            return;
+          }
+          const images = await scrapeBingImages(query, limit);
+          sendJson(res, 200, { query, count: images.length, images });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          sendJson(res, 500, { error: msg });
+        }
+      });
+    },
+  };
+}
+
 function videoRenderApiPlugin(): Plugin {
   const outputDir = path.resolve(__dirname, 'public/generated');
   const videoPath = path.join(outputDir, 'yingdao-auto-remix-demo.mp4');
@@ -803,7 +896,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react(), centaurRuntimeApiPlugin(env), assetUploadApiPlugin(), videoRenderApiPlugin()],
+    plugins: [react(), centaurRuntimeApiPlugin(env), assetUploadApiPlugin(), imageScrapeApiPlugin(), videoRenderApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),

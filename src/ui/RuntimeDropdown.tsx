@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, Cpu, Eye, EyeOff, Loader2, Plug, RefreshCw, Trash2 } from 'lucide-react';
+import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react';
+import { AlertCircle, Check, ChevronDown, Cpu, Eye, EyeOff, Loader2, Plug, RefreshCw, Trash2 } from 'lucide-react';
 import { useI18n } from '../i18n';
 import type { RuntimeState } from '../hooks/useRuntimeStatus';
 import {
@@ -11,12 +11,55 @@ import {
   type CustomRuntime,
 } from '../adapters/customRuntime';
 
+class FormErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null; info: string }> {
+  state = { error: null as Error | null, info: '' };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('[CustomRuntimeForm crashed]', error, info);
+    this.setState({ info: info.componentStack ?? '' });
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="rounded-xl border border-terracotta/40 bg-terracotta/5 p-3 text-xs">
+          <p className="flex items-center gap-1.5 font-semibold text-terracotta">
+            <AlertCircle size={12} />
+            自定义 API 表单崩了
+          </p>
+          <p className="mt-1 break-all text-near-black">{this.state.error.message}</p>
+          {this.state.error.stack && (
+            <details className="mt-1.5">
+              <summary className="cursor-pointer text-stone-gray">stack</summary>
+              <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap text-[10px] text-stone-gray">
+                {this.state.error.stack}
+              </pre>
+            </details>
+          )}
+          <button
+            type="button"
+            onClick={() => this.setState({ error: null, info: '' })}
+            className="mt-2 inline-flex items-center gap-1 rounded-md border border-terracotta/40 bg-white px-2 py-1 text-[10px] text-terracotta hover:bg-terracotta/10"
+          >
+            重试
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const IRIS = '#7c3aed';
 
 const PRESETS: Array<{ label: string; baseUrl: string; modelHint: string }> = [
   { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', modelHint: 'gpt-4o-mini' },
   { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', modelHint: 'deepseek-chat' },
-  { label: 'Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', modelHint: 'gemini-2.0-flash' },
+  { label: 'Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', modelHint: 'gemini-3.5-flash' },
   { label: 'Claude(Anthropic)', baseUrl: 'https://api.anthropic.com/v1', modelHint: 'claude-3-5-sonnet-latest' },
   { label: '智谱 BigModel', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', modelHint: 'glm-4-flash' },
   { label: '通义 DashScope', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', modelHint: 'qwen-plus' },
@@ -75,7 +118,9 @@ export default function RuntimeDropdown({ runtime, floating = false }: RuntimeDr
             floating ? 'bottom-full mb-2' : 'mt-2'
           }`}
         >
-          <CustomRuntimeForm current={custom} />
+          <FormErrorBoundary>
+            <CustomRuntimeForm current={custom} />
+          </FormErrorBoundary>
 
           <div className="mt-3 flex items-start justify-between gap-3 border-t border-border-cream pt-3">
             <div>
@@ -167,19 +212,45 @@ function CustomRuntimeForm({ current }: { current: CustomRuntime | null }) {
     if (!canSubmit) return;
     setTesting(true);
     setFeedback(null);
-    const res = await testCustomRuntime({ baseUrl, apiKey, model, label });
-    setFeedback({ ok: res.ok, message: res.message });
-    setTesting(false);
+    try {
+      const res = await testCustomRuntime({
+        baseUrl: baseUrl.trim(),
+        apiKey: apiKey.trim(),
+        model: model.trim(),
+        label: label.trim(),
+      });
+      setFeedback({ ok: res.ok, message: res.message });
+    } catch (e) {
+      // 防御:任何 sync throw(比如 header 构造失败 / fetch 拒收 / 浏览器 GFW)
+      const msg = e instanceof Error ? e.message : String(e);
+      setFeedback({ ok: false, message: `测试异常:${msg}` });
+    } finally {
+      setTesting(false);
+    }
   };
 
   const onSave = () => {
     if (!canSubmit) return;
-    saveCustomRuntime({ baseUrl, apiKey, model, label });
-    setFeedback({ ok: true, message: '已保存 · 之后所有 LLM 调用走这个端点' });
+    try {
+      saveCustomRuntime({
+        baseUrl: baseUrl.trim(),
+        apiKey: apiKey.trim(),
+        model: model.trim(),
+        label: label.trim(),
+      });
+      setFeedback({ ok: true, message: '已保存 · 之后所有 LLM 调用走这个端点' });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setFeedback({ ok: false, message: `保存失败:${msg}` });
+    }
   };
 
   const onClear = () => {
-    clearCustomRuntime();
+    try {
+      clearCustomRuntime();
+    } catch {
+      /* ignore */
+    }
     setApiKey('');
     setFeedback(null);
   };
@@ -255,15 +326,15 @@ function CustomRuntimeForm({ current }: { current: CustomRuntime | null }) {
       </div>
 
       {feedback && (
-        <p
-          className="mt-2 rounded-md px-2 py-1 text-[11px] leading-5"
+        <pre
+          className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-md px-2 py-1 font-sans text-[11px] leading-5"
           style={{
             background: feedback.ok ? 'rgba(122,158,126,0.12)' : 'rgba(192,117,90,0.12)',
             color: feedback.ok ? '#5b7a5e' : '#a85a3f',
           }}
         >
           {feedback.message}
-        </p>
+        </pre>
       )}
 
       <div className="mt-2 flex gap-1.5">

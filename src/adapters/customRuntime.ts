@@ -98,13 +98,20 @@ export async function testCustomRuntime(r: Omit<CustomRuntime, 'updatedAt'>): Pr
       ? data!.data.map((m) => m.id ?? '').filter(Boolean)
       : [];
     const hit = models.length === 0 || models.includes(r.model);
-    return {
-      ok: true,
-      message: hit
-        ? `连通 ✓ 模型 ${r.model} 可用${models.length ? ` · 端点共 ${models.length} 个模型` : ''}`
-        : `连通 ✓ 但模型列表里没找到 "${r.model}",可能名字拼错或要走其他端点`,
-      models,
-    };
+    let message: string;
+    if (hit) {
+      message = `连通 ✓ 模型 ${r.model} 可用${models.length ? ` · 端点共 ${models.length} 个模型` : ''}`;
+    } else {
+      // 列出端点真实可用的 model,让用户照着填
+      const geminiOnly = models.filter((m) => m.includes('gemini'));
+      const shown = (geminiOnly.length ? geminiOnly : models).slice(0, 12);
+      const omitted = (geminiOnly.length || models.length) - shown.length;
+      message =
+        `连通 ✓ 但 "${r.model}" 不在你 key 真实可用的列表里。` +
+        `\n你能用的(前 ${shown.length}${omitted > 0 ? `,共 ${geminiOnly.length || models.length}` : ''}):\n` +
+        shown.map((m) => `· ${m}`).join('\n');
+    }
+    return { ok: true, message, models };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, message: msg.includes('aborted') ? '请求超时(8s)' : msg };

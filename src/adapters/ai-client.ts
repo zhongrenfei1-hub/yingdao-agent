@@ -514,16 +514,13 @@ export async function getClientAsync(): Promise<AIClient> {
       models: {
         invoke: async ({ prompt }: { prompt: string }) => {
           // 优先级 1:用户在浏览器里填的 OpenAI-compat 端点(localStorage)
+          //   注意:如果用户已经显式保存了 customRuntime,就**只走它**,失败直接 throw,
+          //   不悄悄回退 demo —— 用户得知道为什么没出真模型。
           const custom = loadCustomRuntime();
           if (custom) {
-            try {
-              const text = await invokeCustomRuntime(prompt, custom);
-              setLastClientMode('real');
-              return { text, provider: 'custom', model: custom.model };
-            } catch (err) {
-              console.warn('[ai-client] custom runtime failed, falling back:', err);
-              // 不直接降级 demo,先试 server middleware 路径
-            }
+            const text = await invokeCustomRuntime(prompt, custom);
+            setLastClientMode('real');
+            return { text, provider: 'custom', model: custom.model };
           }
           // 优先级 2:vite middleware proxy(.env CENTAUR_MODEL_API_KEY)
           try {
