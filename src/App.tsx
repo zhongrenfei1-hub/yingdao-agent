@@ -8,6 +8,7 @@ import { useRuntimeStatus } from './hooks/useRuntimeStatus';
 import { BookOpen, Github, Languages, MessagesSquare, Rocket, SlidersHorizontal } from 'lucide-react';
 import RuntimeDropdown from './ui/RuntimeDropdown';
 import ImageScrapePanel from './ui/ImageScrapePanel';
+import TtsPanel from './ui/TtsPanel';
 import HeroBanner from './ui/HeroBanner';
 
 type WorkbenchTab = 'quick' | 'loop';
@@ -91,6 +92,7 @@ function AppShell() {
 
       <RuntimeDropdown runtime={runtime} floating />
       <ImageScrapePanel floating />
+      <TtsPanel floating />
     </div>
   );
 }

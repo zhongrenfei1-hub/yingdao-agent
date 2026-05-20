@@ -1045,6 +1045,110 @@ function ttsEdgeApiPlugin(): Plugin {
   };
 }
 
+// === fasterwhisper ASR · 上传音频/视频文件 → 字幕 JSON ===
+//   spawn python3 scripts/asr-whisper.py(faster-whisper MIT pip 包,运行时依赖)
+//   首次调用会下载 base 模型到 /root/.cache/huggingface(~145MB)
+function asrWhisperApiPlugin(): Plugin {
+  const uploadDir = path.resolve(__dirname, 'public/generated/asr-uploads');
+  return {
+    name: 'yingdao-asr-whisper-api',
+    configureServer(server) {
+      server.middlewares.use('/api/asr/whisper', async (req, res) => {
+        if (req.method !== 'POST') {
+          sendJson(res, 405, { error: 'Method not allowed' });
+          return;
+        }
+        const contentType = req.headers['content-type'] ?? '';
+        if (!contentType.startsWith('multipart/form-data')) {
+          sendJson(res, 400, {
+            error: 'Expected multipart/form-data,上传一个音频/视频文件',
+          });
+          return;
+        }
+
+        const sid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+        let savedPath: string | null = null;
+        let modelSize = 'base';
+        let language = 'zh';
+        const writes: Promise<void>[] = [];
+
+        const bb = Busboy({
+          headers: req.headers,
+          limits: { files: 1, fileSize: 100 * 1024 * 1024 },
+        });
+
+        bb.on('file', (_field, file, info) => {
+          const ext = path.extname(info.filename ?? 'audio').toLowerCase() || '.mp3';
+          const target = path.join(uploadDir, `${sid}${ext}`);
+          const chunks: Buffer[] = [];
+          file.on('data', (c: Buffer) => chunks.push(c));
+          file.on('end', () => {
+            const buf = Buffer.concat(chunks);
+            const p = mkdir(uploadDir, { recursive: true })
+              .then(() => writeFile(target, buf))
+              .then(() => { savedPath = target; });
+            writes.push(p);
+          });
+        });
+
+        bb.on('field', (name, value) => {
+          if (name === 'model') modelSize = value || 'base';
+          if (name === 'language' || name === 'lang') language = value || 'zh';
+        });
+
+        bb.on('finish', async () => {
+          await Promise.all(writes);
+          if (!savedPath) {
+            sendJson(res, 400, { error: '未收到音频/视频文件' });
+            return;
+          }
+
+          // spawn python3 scripts/asr-whisper.py
+          const scriptPath = path.resolve(__dirname, 'scripts/asr-whisper.py');
+          try {
+            const result = await new Promise<string>((resolve, reject) => {
+              const ctrl = new AbortController();
+              const timer = setTimeout(() => {
+                ctrl.abort();
+                reject(new Error('whisper 超时(5min)'));
+              }, 5 * 60 * 1000);
+              const child = spawn('python3', [scriptPath, savedPath!, modelSize, language], {
+                stdio: ['ignore', 'pipe', 'pipe'],
+                signal: ctrl.signal,
+              });
+              let stdout = '';
+              let stderr = '';
+              child.stdout.on('data', (c) => { stdout += c.toString(); });
+              child.stderr.on('data', (c) => { stderr += c.toString(); });
+              child.on('error', (err) => { clearTimeout(timer); reject(err); });
+              child.on('close', (code) => {
+                clearTimeout(timer);
+                if (code === 0) resolve(stdout);
+                else reject(new Error(`whisper exit ${code}: ${stderr.slice(-400)}`));
+              });
+            });
+            try {
+              const json = JSON.parse(result);
+              sendJson(res, 200, json);
+            } catch {
+              sendJson(res, 500, { error: 'whisper 输出不是 JSON', raw: result.slice(0, 400) });
+            }
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            sendJson(res, 500, { error: msg });
+          }
+        });
+
+        bb.on('error', (err) => {
+          sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+        });
+
+        req.pipe(bb);
+      });
+    },
+  };
+}
+
 // 极简 health endpoint:返回 200 + 当前服务状态,docker healthcheck 用
 function healthApiPlugin(): Plugin {
   return {
@@ -1129,7 +1233,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react(), centaurRuntimeApiPlugin(env), healthApiPlugin(), ttsEdgeApiPlugin(), assetUploadApiPlugin(), imageScrapeApiPlugin(), videoRenderApiPlugin()],
+    plugins: [react(), centaurRuntimeApiPlugin(env), healthApiPlugin(), ttsEdgeApiPlugin(), asrWhisperApiPlugin(), assetUploadApiPlugin(), imageScrapeApiPlugin(), videoRenderApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
