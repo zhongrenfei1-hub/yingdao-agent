@@ -37,10 +37,19 @@ RUN npm install --no-audit --no-fund
 # 阶段 3:拷贝项目源码
 COPY . .
 
-# 阶段 4:预拉 hyperframes 的 bundled Chrome(让首次 render 不卡漫长下载)
-# 失败不阻塞(可能版本里没这个子命令,默认会在首次 render 时下载)
-RUN npx --yes hyperframes@0.6.12 doctor 2>&1 | head -20 || true \
+# 阶段 4:装 chrome-headless-shell + 做稳定 symlink(避开版本号路径)
+#   system /usr/bin/chromium 会让 puppeteer launch 失败;chrome-headless-shell 才能跑通 docker 渲染。
+RUN npx --yes @puppeteer/browsers install chrome-headless-shell 2>&1 | tee /tmp/hf-browser.log \
+ && BROWSER_PATH=$(tail -1 /tmp/hf-browser.log | awk '{print $NF}') \
+ && echo "$BROWSER_PATH" > /app/.hyperframes-browser-path \
+ && ln -sf "$BROWSER_PATH" /usr/local/bin/hyperframes-browser \
+ && rm /tmp/hf-browser.log \
+ && npx --yes hyperframes@0.6.12 doctor 2>&1 | head -20 || true \
  && mkdir -p public/generated
+
+# 让 hyperframes / puppeteer 默认就找到 chrome-headless-shell
+ENV HYPERFRAMES_BROWSER_PATH=/usr/local/bin/hyperframes-browser \
+    PUPPETEER_EXECUTABLE_PATH=/usr/local/bin/hyperframes-browser
 
 # 5180 是影刀 vite.config.ts 里设定的端口
 EXPOSE 5180

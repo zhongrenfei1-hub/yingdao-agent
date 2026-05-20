@@ -3,8 +3,21 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync, readFileSync } from 'node:fs';
 import Busboy from 'busboy';
 import * as cheerio from 'cheerio';
+
+// 容器内 Dockerfile 在 build 时把 chrome-headless-shell 路径写进这个文件,
+// hyperframes render 时通过 HYPERFRAMES_BROWSER_PATH env 传进去 — 解决 docker
+// 里 puppeteer launch system chromium 直接挂的问题。
+function detectHyperframesBrowser(): string | undefined {
+  const pathFile = '/app/.hyperframes-browser-path';
+  if (existsSync(pathFile)) {
+    const p = readFileSync(pathFile, 'utf8').trim();
+    if (p && existsSync(p)) return p;
+  }
+  return process.env.HYPERFRAMES_BROWSER_PATH;
+}
 
 function readRequestBody(req: import('http').IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -520,8 +533,15 @@ interface ScriptInput {
 
 const HF_VERSION = '0.6.12';
 const HF_PITCH_COMPOSITION = path.resolve(__dirname, 'compositions/short-video-pitch');
+const HF_DEMO_COMPOSITION = path.resolve(__dirname, 'compositions/short-video-demo');
 const HF_REMIX_COMPOSITION = path.resolve(__dirname, 'compositions/local-asset-remix');
 const REMIX_ASSETS_UPLOADS = path.resolve(HF_REMIX_COMPOSITION, 'assets/uploads');
+
+// docker software-WebGL 模式下,short-video-pitch 18s/540 帧太重,Chrome 易在中途崩。
+// 走 short-video-demo(5.3s/159 帧)更稳。env 控制方便宿主机模式回切。
+const PREFER_LIGHT_COMPOSITION = process.env.YINGDAO_LIGHT_RENDER !== '0';
+const HF_DEFAULT_COMPOSITION = PREFER_LIGHT_COMPOSITION ? HF_DEMO_COMPOSITION : HF_PITCH_COMPOSITION;
+const DEFAULT_DURATION_SECONDS = PREFER_LIGHT_COMPOSITION ? 5.3 : 15.5;
 
 function splitTitleTwoLines(title: string): [string, string] {
   const t = (title ?? '').trim();
@@ -572,13 +592,26 @@ function scriptToHyperframesVariables(script: ScriptInput | undefined): Record<s
 
 function runHyperframes(args: string[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn('npx', args, { cwd });
+    const browserPath = detectHyperframesBrowser();
+    const env = browserPath
+      ? { ...process.env, HYPERFRAMES_BROWSER_PATH: browserPath }
+      : { ...process.env };
+    console.log('[hyperframes] spawn', { cwd, browserPath, npx: env.PATH?.split(':').slice(0, 3) });
+    // shell: true 让 docker 容器内 PATH 解析跟 bash 一致;同时 stdio inherit
+    // 让 hyperframes 进度 / 错误直接打到 vite server log,方便诊断
+    // shell: false 默认 —— 之前 args 包含 JSON 字符串,shell 会吃掉引号导致 Invalid JSON
+    // stdio inherit stdout 让 hyperframes 进度直接进 vite log,便于诊断
+    const child = spawn('npx', args, { cwd, env, stdio: ['ignore', 'inherit', 'pipe'] });
     let stderr = '';
-    child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+    child.stderr?.on('data', (chunk) => {
+      const s = chunk.toString();
+      stderr += s;
+      process.stderr.write(s); // 同时 echo 到 vite log
+    });
     child.on('error', reject);
     child.on('close', (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`hyperframes exited with code ${code}: ${stderr.slice(-600)}`));
+      else reject(new Error(`hyperframes exited with code ${code}: ${stderr.slice(-800)}`));
     });
   });
 }
@@ -589,13 +622,13 @@ async function renderViaHyperframes(
   outputDir: string,
   videoPath: string,
   posterPath: string,
-): Promise<{ composition: 'short-video-pitch' | 'local-asset-remix'; durationSeconds: number }> {
+): Promise<{ composition: 'short-video-pitch' | 'short-video-demo' | 'local-asset-remix'; durationSeconds: number }> {
   const useRemix = Array.isArray(assetPaths) && assetPaths.length > 0;
   await mkdir(outputDir, { recursive: true });
 
   let variables: Record<string, string>;
   let cwd: string;
-  let composition: 'short-video-pitch' | 'local-asset-remix';
+  let composition: 'short-video-pitch' | 'short-video-demo' | 'local-asset-remix';
   let durationSeconds: number;
 
   if (useRemix) {
@@ -617,12 +650,15 @@ async function renderViaHyperframes(
       accent: '#7c3aed',
     };
   } else {
-    composition = 'short-video-pitch';
-    cwd = HF_PITCH_COMPOSITION;
-    durationSeconds = 5.3;
+    composition = PREFER_LIGHT_COMPOSITION ? 'short-video-demo' : 'short-video-pitch';
+    cwd = HF_DEFAULT_COMPOSITION;
+    durationSeconds = DEFAULT_DURATION_SECONDS;
     variables = scriptToHyperframesVariables(script);
   }
 
+  // 注意:hyperframes 的 --docker 是"用 docker 跑 chrome" 不是"我在 docker 里",
+  // 容器内没装 docker CLI 用不了。容器内的正确路径 = PUPPETEER_EXECUTABLE_PATH 走系统
+  // chromium + HF_NO_SANDBOX(已在 docker-compose.yml 注入 env)
   await runHyperframes(
     [
       '--yes',

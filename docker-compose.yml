@@ -25,9 +25,13 @@ services:
       # - ./vite.config.ts:/app/vite.config.ts
     environment:
       - NODE_ENV=development
-      # hyperframes 在 docker 里的 Chrome 需要 --no-sandbox
-      # 0.6.12 大多数情况自动检测,如有问题手动启:HF_NO_SANDBOX=1
+      # 不要在这里设 PUPPETEER_EXECUTABLE_PATH —— Dockerfile 已经把它指到
+      # /usr/local/bin/hyperframes-browser(chrome-headless-shell symlink),
+      # 这里若再设 system /usr/bin/chromium 会覆盖且让 docker 渲染挂
+      - HF_NO_SANDBOX=1
+      - CHROME_NO_SANDBOX=1
+      - CHROME_DISABLE_GPU=1
     restart: unless-stopped
     # hyperframes 渲染峰值内存 1-2GB,给宽裕一点
     mem_limit: 3g
-    shm_size: 1g  # Chrome 需要更大的 /dev/shm
+    shm_size: 2g  # software WebGL + 18s 540 帧 → Chrome 易撑不住 1GB shm,加到 2GB
