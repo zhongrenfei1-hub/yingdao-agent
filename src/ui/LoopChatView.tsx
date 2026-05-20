@@ -45,7 +45,7 @@ function MiniProgress({ configId }: { configId: string }) {
         <div key={stage} className="flex items-center gap-2 py-0.5">
           <span className={`h-2 w-2 rounded-full ${
             i < currentIdx ? 'bg-sage-green'
-              : i === currentIdx ? 'bg-terracotta animate-pulse'
+              : i === currentIdx ? 'bg-iris-600 animate-pulse'
               : 'bg-warm-sand'
           }`} />
           <span className={`text-xs ${
@@ -189,11 +189,11 @@ export default function LoopChatView() {
                   : '回复确认，或者说出你的想法…'
               }
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-border-cream bg-ivory px-4 py-2.5 text-sm text-near-black outline-none focus:border-terracotta/40 placeholder:text-stone-gray"
+              className="flex-1 resize-none rounded-xl border border-border-cream bg-ivory px-4 py-2.5 text-sm text-near-black outline-none focus:border-iris-400 placeholder:text-stone-gray"
             />
             <button type="button" onClick={handleSend}
               disabled={!inputText.trim() || sending}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-terracotta text-white transition hover:bg-terracotta/90 disabled:opacity-40">
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-iris-600 text-white transition hover:bg-iris-700 disabled:opacity-40">
               <ArrowUp size={18} />
             </button>
           </div>

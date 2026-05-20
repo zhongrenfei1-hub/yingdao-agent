@@ -150,9 +150,9 @@ export default function RuntimeDropdown({ runtime, floating = false }: RuntimeDr
                   }}
                   className={`w-full rounded-xl border px-3 py-2.5 text-left transition ${
                     selected
-                      ? 'border-terracotta/35 bg-terracotta/10'
+                      ? 'border-iris-500/40 bg-iris-50'
                       : connector.available
-                        ? 'border-border-cream bg-ivory/80 hover:border-terracotta/25'
+                        ? 'border-border-cream bg-ivory/80 hover:border-iris-300'
                         : 'border-border-cream bg-warm-sand/25 opacity-70'
                   }`}
                 >
@@ -163,7 +163,7 @@ export default function RuntimeDropdown({ runtime, floating = false }: RuntimeDr
                     </div>
                     <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${
                       selected
-                        ? 'bg-terracotta/15 text-terracotta'
+                        ? 'bg-iris-100 text-iris-700'
                         : connector.available
                           ? 'bg-sage-green/15 text-sage-green'
                           : 'bg-warm-sand text-stone-gray'
