@@ -596,10 +596,7 @@ function runHyperframes(args: string[], cwd: string): Promise<void> {
     const env = browserPath
       ? { ...process.env, HYPERFRAMES_BROWSER_PATH: browserPath }
       : { ...process.env };
-    console.log('[hyperframes] spawn', { cwd, browserPath, npx: env.PATH?.split(':').slice(0, 3) });
-    // shell: true 让 docker 容器内 PATH 解析跟 bash 一致;同时 stdio inherit
-    // 让 hyperframes 进度 / 错误直接打到 vite server log,方便诊断
-    // shell: false 默认 —— 之前 args 包含 JSON 字符串,shell 会吃掉引号导致 Invalid JSON
+    // shell: false 默认 —— args 包含 JSON 字符串,shell 会吃掉引号导致 Invalid JSON
     // stdio inherit stdout 让 hyperframes 进度直接进 vite log,便于诊断
     const child = spawn('npx', args, { cwd, env, stdio: ['ignore', 'inherit', 'pipe'] });
     let stderr = '';
