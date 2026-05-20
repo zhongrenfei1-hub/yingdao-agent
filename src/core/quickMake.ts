@@ -137,6 +137,8 @@ export async function runQuickMake(
           duration: '15s',
           hook: '',
           sellingPoint: input.pitch,
+          audience: '',
+          tone: input.visualStyle ?? '',
         },
       });
       const raw = await runLLM(prompt);

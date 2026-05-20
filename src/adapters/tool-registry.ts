@@ -103,6 +103,8 @@ export const TOOL_CATALOG: AIToolDefinition[] = [
       { id: 'duration', label: '时长', type: 'text', placeholder: '30s' },
       { id: 'hook', label: '3 秒钩子', type: 'text' },
       { id: 'sellingPoint', label: '核心卖点', type: 'text' },
+      { id: 'audience', label: '目标受众', type: 'text', placeholder: 'PM 访谈拿到的目标人群' },
+      { id: 'tone', label: '调性', type: 'text', placeholder: '专业 / 活泼 / 搞笑 / 治愈 / 沉浸' },
     ],
     outputInstruction: `严格输出 JSON（不要 markdown 代码块），schema：
 {
@@ -110,6 +112,9 @@ export const TOOL_CATALOG: AIToolDefinition[] = [
   "cover": "封面文案",
   "duration": 12,
   "platform": "抖音 / TikTok",
+  "audience": "目标受众(原样回填用户输入)",
+  "tone": "调性(原样回填用户输入)",
+  "sellingPoints": ["卖点 1", "卖点 2"],
   "hook": "0-3 秒钩子文案",
   "scenes": [
     { "id": "hook", "duration": 3, "visual": "画面描述", "voiceover": "旁白", "caption": "字幕", "transition": "cut" },
@@ -119,7 +124,11 @@ export const TOOL_CATALOG: AIToolDefinition[] = [
   "cta": "...",
   "risks": ["平台违规词", "版权风险", "品牌限制"]
 }
-scenes 各项的 duration 总和应等于 duration。id 用 hook/demo/cta 之一以便下游 remix 识别镜头类型。`,
+要点:
+- 整条视频的调性必须贴合 tone 字段(专业:严谨数据 / 活泼:口语化感叹号 / 搞笑:段子节奏 / 治愈:慢节奏温暖词)
+- hook / voiceover / caption 都要让 audience 觉得"在跟我说话",别用通用万能话
+- scenes 各项的 duration 总和应等于 duration
+- id 用 hook/demo/cta 之一以便下游 remix 识别镜头类型`,
   },
   {
     id: 'ai-video-generation-brief',
