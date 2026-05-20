@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { animate } from 'framer-motion';
 import { Layers, MessagesSquare, Package, Rocket } from 'lucide-react';
 
 const IRIS = '#7c3aed';
@@ -90,11 +92,21 @@ function Stat({
   suffix: string;
   label: string;
 }) {
+  const target = Number(value) || 0;
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    const controls = animate(0, target, {
+      duration: 1.4,
+      ease: [0.2, 0.8, 0.2, 1],
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [target]);
   return (
     <div className="border-l-2 pl-3" style={{ borderColor: 'rgba(124,58,237,0.4)' }}>
       <p className="num-stat text-2xl font-semibold leading-none text-near-black">
-        {value}
-        <span className="text-iris-500" style={{ color: IRIS }}>{suffix}</span>
+        {display}
+        <span style={{ color: IRIS }}>{suffix}</span>
       </p>
       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-stone-gray">
         {label}
