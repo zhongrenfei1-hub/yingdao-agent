@@ -5,11 +5,39 @@
  * 这个面板把当前 active cycle 的所有产物按工具分组、按时间排序,一目了然。
  */
 
+import { useEffect, useRef, useState } from 'react';
 import { useLoopStore } from '../core/loopStore';
 import { PUBLISH_PACK_FIELD } from '../core/publishPack';
 import PublishPackPanel from './PublishPackPanel';
 import { Check, Clapperboard, Clock, FileText, Layers, Loader2, Package, Sparkles, Wand2 } from 'lucide-react';
 import type { LoopTask } from '../core/types';
+
+// 前端轻量记 task 第一次进 running 的时间,渲染 elapsed timer。不动 core type。
+function useTaskStartTimes(tasks: LoopTask[]): Record<string, number> {
+  const map = useRef<Record<string, number>>({});
+  for (const t of tasks) {
+    if (t.status === 'running' && !map.current[t.id]) {
+      map.current[t.id] = Date.now();
+    }
+  }
+  return map.current;
+}
+
+function ElapsedTimer({ startedAt }: { startedAt: number }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const mm = Math.floor(elapsed / 60);
+  const ss = elapsed % 60;
+  return (
+    <span className="ml-auto inline-flex items-center gap-1 text-[10px] tabular-nums text-stone-gray">
+      {mm > 0 ? `${mm}:${String(ss).padStart(2, '0')}` : `${ss}s`}
+    </span>
+  );
+}
 
 const IRIS = '#7c3aed';
 const IRIS_SOFT = 'rgba(124,58,237,0.08)';
@@ -88,73 +116,62 @@ export default function CycleOutputPanel({ configId }: Props) {
           </div>
         )}
 
-        {cycle && (
-          <>
-            {/* 目标 */}
-            <Block label="🎯 本轮目标">
-              <p className="text-xs leading-5 text-near-black">{cycle.goal}</p>
-            </Block>
-
-            {/* 已规划任务 + 状态 */}
-            {cycle.tasks.length > 0 ? (
-              <Block label="📋 任务进度">
-                <ul className="space-y-1.5">
-                  {cycle.tasks.map((task) => (
-                    <TaskRow key={task.id} task={task} />
-                  ))}
-                </ul>
-              </Block>
-            ) : cycle.stage === 'planning' ? (
-              <Block label="📋 任务进度">
-                <p className="flex items-center gap-1.5 text-[11px] text-stone-gray">
-                  <Loader2 size={10} className="animate-spin" />
-                  AI 正在规划任务清单…
-                </p>
-              </Block>
-            ) : null}
-
-            {/* 最新视频(如果有 task draft.fields.videoUrl) */}
-            {(() => {
-              const remix = [...cycle.tasks]
-                .reverse()
-                .find((t) => t.draft?.fields?.videoUrl);
-              if (!remix?.draft?.fields?.videoUrl) return null;
-              return (
-                <Block label="🎬 视频产出">
-                  <div className="overflow-hidden rounded-lg bg-black/90">
-                    <video
-                      controls
-                      src={String(remix.draft.fields.videoUrl)}
-                      poster={remix.draft.fields.posterUrl ? String(remix.draft.fields.posterUrl) : undefined}
-                      className="aspect-[9/16] w-full max-w-[220px] object-contain"
-                    />
-                  </div>
-                  <div className="mt-1 space-y-0.5 text-[10px] text-stone-gray">
-                    {remix.draft.fields.durationSeconds && (
-                      <p>时长 · {String(remix.draft.fields.durationSeconds)}s</p>
-                    )}
-                    {remix.draft.fields.adapter && <p>引擎 · {String(remix.draft.fields.adapter)}</p>}
-                  </div>
-                </Block>
-              );
-            })()}
-
-            {/* 发布包(如果有) */}
-            {(() => {
-              const pack = [...cycle.tasks]
-                .reverse()
-                .find((t) => t.draft?.fields?.[PUBLISH_PACK_FIELD]);
-              if (!pack?.draft?.fields?.[PUBLISH_PACK_FIELD]) return null;
-              return (
-                <Block label="📦 发布包">
-                  <PublishPackPanel json={String(pack.draft.fields[PUBLISH_PACK_FIELD])} />
-                </Block>
-              );
-            })()}
-          </>
-        )}
+        {cycle && <CycleContent cycle={cycle} />}
       </div>
     </section>
+  );
+}
+
+function CycleContent({ cycle }: { cycle: NonNullable<ReturnType<typeof useLoopStore.getState>['cycles'][string]> }) {
+  const taskStartTimes = useTaskStartTimes(cycle.tasks);
+  const remix = [...cycle.tasks].reverse().find((t) => t.draft?.fields?.videoUrl);
+  const pack = [...cycle.tasks].reverse().find((t) => t.draft?.fields?.[PUBLISH_PACK_FIELD]);
+  return (
+    <>
+      <Block label="🎯 本轮目标">
+        <p className="text-xs leading-5 text-near-black">{cycle.goal}</p>
+      </Block>
+
+      {cycle.tasks.length > 0 ? (
+        <Block label="📋 任务进度">
+          <ul className="space-y-1.5">
+            {cycle.tasks.map((task) => (
+              <TaskRow key={task.id} task={task} startedAt={taskStartTimes[task.id]} />
+            ))}
+          </ul>
+        </Block>
+      ) : cycle.stage === 'planning' ? (
+        <Block label="📋 任务进度">
+          <p className="flex items-center gap-1.5 text-[11px] text-stone-gray">
+            <Loader2 size={10} className="animate-spin" />
+            AI 正在规划任务清单…
+          </p>
+        </Block>
+      ) : null}
+
+      {remix?.draft?.fields?.videoUrl && (
+        <Block label="🎬 视频产出">
+          <div className="overflow-hidden rounded-lg bg-black/90">
+            <video
+              controls
+              src={String(remix.draft.fields.videoUrl)}
+              poster={remix.draft.fields.posterUrl ? String(remix.draft.fields.posterUrl) : undefined}
+              className="aspect-[9/16] w-full max-w-[220px] object-contain"
+            />
+          </div>
+          <div className="mt-1 space-y-0.5 text-[10px] text-stone-gray">
+            {remix.draft.fields.durationSeconds && <p>时长 · {String(remix.draft.fields.durationSeconds)}s</p>}
+            {remix.draft.fields.adapter && <p>引擎 · {String(remix.draft.fields.adapter)}</p>}
+          </div>
+        </Block>
+      )}
+
+      {pack?.draft?.fields?.[PUBLISH_PACK_FIELD] && (
+        <Block label="📦 发布包">
+          <PublishPackPanel json={String(pack.draft.fields[PUBLISH_PACK_FIELD])} />
+        </Block>
+      )}
+    </>
   );
 }
 
@@ -169,7 +186,7 @@ function Block({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function TaskRow({ task }: { task: LoopTask }) {
+function TaskRow({ task, startedAt }: { task: LoopTask; startedAt?: number }) {
   const meta = TOOL_META[task.appToolId];
   const statusIcon = (() => {
     switch (task.status) {
@@ -211,6 +228,7 @@ function TaskRow({ task }: { task: LoopTask }) {
       <span className="flex-1 text-[11px] font-medium text-near-black">
         {meta?.label ?? task.appName}
       </span>
+      {task.status === 'running' && startedAt && <ElapsedTimer startedAt={startedAt} />}
       <span className="inline-flex items-center gap-1 text-[10px] text-stone-gray">
         {statusIcon}
         {statusLabel}
