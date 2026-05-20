@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, Copy, Hash, Clock3, ListChecks, LineChart, Layers } from 'lucide-react';
+import { Check, Copy, ExternalLink, Hash, Clock3, ListChecks, LineChart, Layers, Send } from 'lucide-react';
 import {
   formatPlatformCopy,
   parsePublishPack,
@@ -10,6 +10,17 @@ import {
 interface Props {
   json: string;
 }
+
+// 各平台创作者后台 deep link · 点"发到平台"先复制文案到剪贴板再 window.open
+//   不走平台 OAuth/RPA,合规零账号风险 —— PRD 第 9.2 节"半自动发布"路径
+const PLATFORM_DEEP_LINK: Record<string, { label: string; url: string }> = {
+  '抖音': { label: '抖音创作者中心', url: 'https://creator.douyin.com/creator-micro/content/upload' },
+  TikTok: { label: 'TikTok Upload', url: 'https://www.tiktok.com/upload' },
+  '小红书': { label: '小红书创作中心', url: 'https://creator.xiaohongshu.com/publish/publish?source=official' },
+  '快手': { label: '快手创作者中心', url: 'https://cp.kuaishou.com/article/publish/video' },
+  '视频号': { label: '视频号助手', url: 'https://channels.weixin.qq.com/platform/post/create' },
+  'B站': { label: 'B 站创作中心', url: 'https://member.bilibili.com/platform/upload/video/frame' },
+};
 
 export default function PublishPackPanel({ json }: Props) {
   const pack = useMemo<PublishPack | null>(() => parsePublishPack(json), [json]);
@@ -109,17 +120,43 @@ function PlatformCard({
   const captionKey = `caption-${idx}`;
   const hashtagsKey = `hashtags-${idx}`;
   const fullText = formatPlatformCopy(platform);
+  const deepLink = PLATFORM_DEEP_LINK[platform.platform];
+
+  const onSendToPlatform = async () => {
+    if (!deepLink) return;
+    try {
+      await navigator.clipboard.writeText(fullText);
+    } catch {
+      /* 剪贴板写失败也照样打开平台,用户在那边可以手粘 */
+    }
+    window.open(deepLink.url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="space-y-2.5 rounded-xl border border-border-cream bg-white/70 p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-stone-gray">{platform.platform}</span>
-        <CopyBtn
-          onClick={() => onCopy(fullText, fullKey)}
-          copied={copiedKey === fullKey}
-          err={copiedKey === `__err__${fullKey}`}
-          label="复制全部"
-        />
+        <div className="flex items-center gap-1.5">
+          <CopyBtn
+            onClick={() => onCopy(fullText, fullKey)}
+            copied={copiedKey === fullKey}
+            err={copiedKey === `__err__${fullKey}`}
+            label="复制全部"
+          />
+          {deepLink && (
+            <button
+              type="button"
+              onClick={onSendToPlatform}
+              title={`复制文案到剪贴板 + 打开 ${deepLink.label}`}
+              className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] text-white shadow-sm transition hover:opacity-90"
+              style={{ background: '#7c3aed', borderColor: 'rgba(124,58,237,0.3)' }}
+            >
+              <Send size={11} />
+              发到{platform.platform}
+              <ExternalLink size={9} className="opacity-70" />
+            </button>
+          )}
+        </div>
       </div>
 
       <Field label="标题" copyText={platform.title} keyName={titleKey} copiedKey={copiedKey} onCopy={onCopy}>
