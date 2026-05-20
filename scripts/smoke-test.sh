@@ -58,6 +58,13 @@ fi
 status=$(curl -sS -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --max-time 5 "$BASE_URL/api/assets/upload" -d '{}')
 check "POST /api/assets/upload (bad ct)" "400" "$status"
 
+# 5b. edge tts(微软 neural,真合一段中文)
+tts_status=$(curl -sS -o /tmp/yingdao-tts.json -w "%{http_code}" --max-time 30 \
+  -X POST "$BASE_URL/api/tts/edge" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"影刀短视频自动混剪测试","voice":"zh-CN-XiaoxiaoNeural"}')
+check "POST /api/tts/edge" "200" "$tts_status"
+
 # 6. video render(短 demo composition · ≤ 5 min)
 echo ""
 printf "${PURPLE}⏳ 真渲染一遍视频(software WebGL · 4-5 min)…${RESET}\n"

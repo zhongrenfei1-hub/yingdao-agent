@@ -912,6 +912,82 @@ function imageScrapeApiPlugin(): Plugin {
   };
 }
 
+// === Edge TTS · 微软 neural 中文 TTS(替代 Kokoro 解决"机器人感重")===
+//   spawn python3 scripts/tts-edge.py(GPL-3 edge-tts pip 包),
+//   写到 public/generated/tts-<ts>.mp3,返回 URL 给前端
+const EDGE_VOICE_DEFAULT = 'zh-CN-XiaoxiaoNeural';
+
+function ttsEdgeApiPlugin(): Plugin {
+  const outputDir = path.resolve(__dirname, 'public/generated');
+  return {
+    name: 'yingdao-tts-edge-api',
+    configureServer(server) {
+      server.middlewares.use('/api/tts/edge', async (req, res) => {
+        if (req.method !== 'POST') {
+          sendJson(res, 405, { error: 'Method not allowed' });
+          return;
+        }
+        try {
+          const body = await readRequestBody(req);
+          let parsed: { text?: string; voice?: string } = {};
+          if (body.trim()) {
+            try { parsed = JSON.parse(body) as typeof parsed; } catch { /* fall */ }
+          }
+          const text = (parsed.text ?? '').trim();
+          const voice = (parsed.voice ?? EDGE_VOICE_DEFAULT).trim();
+          if (!text) {
+            sendJson(res, 400, { error: 'text 必填' });
+            return;
+          }
+          if (text.length > 4000) {
+            sendJson(res, 400, { error: 'text 太长(单次 ≤ 4000 字)' });
+            return;
+          }
+          await mkdir(outputDir, { recursive: true });
+          const filename = `tts-${Date.now().toString(36)}.mp3`;
+          const outPath = path.join(outputDir, filename);
+          const scriptPath = path.resolve(__dirname, 'scripts/tts-edge.py');
+
+          await new Promise<void>((resolve, reject) => {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => {
+              ctrl.abort();
+              reject(new Error('edge-tts 超时(30s)'));
+            }, 30000);
+            const child = spawn('python3', [scriptPath, outPath, voice], {
+              stdio: ['pipe', 'pipe', 'pipe'],
+              signal: ctrl.signal,
+            });
+            let stderr = '';
+            child.stdin.write(text);
+            child.stdin.end();
+            child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+            child.on('error', (err) => {
+              clearTimeout(timer);
+              reject(err);
+            });
+            child.on('close', (code) => {
+              clearTimeout(timer);
+              if (code === 0) resolve();
+              else reject(new Error(`edge-tts exit ${code}: ${stderr.slice(-400)}`));
+            });
+          });
+
+          sendJson(res, 200, {
+            voice,
+            audioUrl: `/generated/${filename}?t=${Date.now()}`,
+            outputPath: outPath,
+            chars: text.length,
+          });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          sendJson(res, 500, { error: msg });
+        }
+      });
+    },
+  };
+}
+
 // 极简 health endpoint:返回 200 + 当前服务状态,docker healthcheck 用
 function healthApiPlugin(): Plugin {
   return {
@@ -996,7 +1072,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react(), centaurRuntimeApiPlugin(env), healthApiPlugin(), assetUploadApiPlugin(), imageScrapeApiPlugin(), videoRenderApiPlugin()],
+    plugins: [react(), centaurRuntimeApiPlugin(env), healthApiPlugin(), ttsEdgeApiPlugin(), assetUploadApiPlugin(), imageScrapeApiPlugin(), videoRenderApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),

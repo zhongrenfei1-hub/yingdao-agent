@@ -20,7 +20,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     dumb-init \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+# 阶段 1b:装 edge-tts(微软 Edge neural TTS · GPL-3 包 · 作为运行时依赖
+#   pip install + 子进程调用,不污染影刀 MIT codebase)
+RUN pip3 install --break-system-packages --no-cache-dir edge-tts
 
 # hyperframes 用的 Chrome 在 Docker 里要 --no-sandbox
 # 同时让它知道使用系统 Chromium(可选,默认仍走 bundled)
