@@ -119,3 +119,56 @@ docker compose up -d
 - 多用户隔离:渲染产物会覆盖,需要按 cycleId 分目录(代码层改造)
 
 简言之:**影刀的正确形态就是 self-host,不是 SaaS**。
+
+---
+
+## 排错(stage-23 我们踩过的 4 个坑)
+
+### 1. 视频渲染 500 · "Failed to launch the browser process"
+
+```bash
+docker exec yingdao-agent ls -la /usr/local/bin/hyperframes-browser
+```
+
+应该是个 symlink 指向 `/app/chrome-headless-shell/linux-*/chrome-headless-shell`。如果没有,重 build:
+
+```bash
+docker compose up -d --build --force-recreate
+```
+
+### 2. 报错让你"Try --docker for containerized rendering"
+
+不要按它说的加 `--docker` —— 那是让 hyperframes 自己再起一个 docker 跑 chrome,容器里没装 docker CLI,spawn ENOENT。正确路径是装 chrome-headless-shell(我们 Dockerfile 已经处理)。
+
+### 3. curl `localhost:5180` 返回的路径是 `/Users/xxx/...` 而不是 `/app/...`
+
+宿主机有别的进程抢了 5180 端口(常见原因:以前跑过 `npm run dev` 没关)。查 + 杀:
+
+```bash
+lsof -nP -iTCP:5180 -sTCP:LISTEN
+# 找到 PID 后 kill <PID>
+```
+
+### 4. Chrome 渲染中途 crash · "Target closed" / "Navigating frame was detached"
+
+software WebGL 在 docker 里跑 18s/540 帧时常崩。三个方法:
+
+- **默认走 short-video-demo(5.3s/159 帧)**:我们已经默认这条路径,稳
+- **加 colima 资源**:`colima stop && colima start --memory 6 --cpu 4 --disk 30`,renders 不易崩
+- **强制走 short-video-pitch**:docker-compose env 加 `- YINGDAO_LIGHT_RENDER=0`,需要 colima 足够大
+
+### 5. 渲染卡死超时
+
+`YINGDAO_RENDER_TIMEOUT_MS`(默认 10 min),超时 SIGKILL 强杀。要调:
+
+```yaml
+environment:
+  - YINGDAO_RENDER_TIMEOUT_MS=1800000  # 30 min
+```
+
+### 6. 浏览器打开 5180 白屏
+
+最常见:**浏览器装了翻译插件**(沉浸式翻译 / Google Translate / DeepL)修改了 DOM,React 找不到自己之前 render 的节点。解决:
+
+- 关插件,或把 `localhost` 加入"永不翻译"列表
+- 我们 `<html translate="no">` + `<meta name="google" content="notranslate">` 已经标注,主流插件会尊重
