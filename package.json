@@ -44,7 +44,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke": "bash scripts/smoke-test.sh",
+    "sample": "bash scripts/generate-sample.sh",
+    "docker:up": "caffeinate -i docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker logs -f yingdao-agent"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
