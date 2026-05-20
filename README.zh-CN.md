@@ -1,14 +1,52 @@
-# Centaur Loop / 半人马环
+# 影刀 · Yingdao Agent
+
+> 基于 **Centaur Loop** 工作台的短视频增长 Agent + AI 产品经理需求访谈 + hyperframes 视频管线
+> **一键 `docker compose up -d` 起服 + 浏览器里填 Gemini/DeepSeek/OpenAI key + 出片**
 
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
-[![CI](https://github.com/finewood2008/centaur-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/finewood2008/centaur-loop/actions/workflows/ci.yml)
-[![GitHub Pages](https://github.com/finewood2008/centaur-loop/actions/workflows/pages.yml/badge.svg)](https://github.com/finewood2008/centaur-loop/actions/workflows/pages.yml)
 
-[English](./README.md) | 简体中文 | [官网](https://www.centaurloop.com) | [技术设计](./CENTAUR_LOOP_TECHNICAL_DOC.md) | [项目定位](./docs/PROJECT_POSITIONING.zh-CN.md)
+[发布笔记 stage-15~23](./RELEASE_NOTES.zh-CN.md) | [Self-Host 指南](./SELF_HOST.md) | [完整 PRD](./YINGDAO_AGENT_PRD.zh-CN.md) | [飞轮日志](./00_FLYWHEEL.md)
 
-**Centaur Loop Studio：面向人类治理型 AI 反馈闭环的开源工作台。**
+---
+
+## 影刀能做什么
+
+| 入口 | 流程 |
+|---|---|
+| 🚀 **快速制作 tab** | 输入选题 + 卖点 + 平台 + 视觉风格 → 拖入本地素材(可选)→ **一键 4 步出片**:写脚本 → AI 提示词 → hyperframes 混剪 → 多平台发布包(抖音/TikTok/小红书) |
+| 🤖 **Loop 工作台** | AI **产品经理访谈**(主题/受众/卖点/平台/调性)→ 凑齐 brief → 你回「开干」→ 自动跑 5 工具 cycle → 真出 9:16 mp4 |
+| 🖼️ **配图面板** | 右下角浮按:文章关键词 → Bing 图片搜索 → 24 张图网格 → 点缩略图复制原图 URL 直接粘到公众号编辑器 |
+| 🔌 **自定义 API** | 右下角浮按 → 4 个一键预设(OpenAI / DeepSeek / Gemini / Claude / 智谱 / 通义)→ 填 key → 测试 → 保存,**不需要重启** |
+
+## 一键起服
+
+```bash
+git clone https://github.com/zhongrenfei1-hub/yingdao-agent.git
+cd yingdao-agent
+docker compose up -d --build       # 首次 ~15min,后续 < 30s
+# 浏览器开 http://localhost:5180
+```
+
+镜像里有 Node 22 + ffmpeg + chrome-headless-shell + Noto CJK 字体,**所有视频渲染本地跑,
+不上传任何素材到云**(影刀的产品定位就是 self-hosted 本地工作台,见 PRD 第 9 节)。
+
+## 三个产品定位锁死的轴
+
+1. **本地优先 + self-hosted**:不做 SaaS,docker 单容器跑你自己机器
+2. **AI 产品经理而不是 cron 执行器**:先访谈搞清楚需求才开干,不是给个关键词就启动
+3. **hyperframes HTML-as-video**:不靠 ffmpeg drawbox 占位,真带文字带 GSAP 动画的 mp4
+
+---
+
+> 下方为底座 **Centaur Loop** 文档(影刀 = Centaur Loop + 短视频 Agent 化)。
+
+---
+
+# Centaur Loop / 半人马环
+
+**Centaur Loop Studio:面向人类治理型 AI 反馈闭环的开源工作台。**
 
 Centaur Loop 帮助团队把 AI Agent 运行在可治理的业务循环里：Agent 可以规划和执行，但人类在关键节点保留判断权；真实世界反馈会被复盘，并在人工确认后成为下一轮可用的记忆。
 
