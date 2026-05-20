@@ -525,6 +525,10 @@ interface ScriptInput {
   hook?: string;
   platform?: string;
   cta?: string;
+  // PM 访谈合成的 brief 字段(可选,有就用,没有就走默认)
+  audience?: string;
+  tone?: string;
+  sellingPoints?: string[];
 }
 
 // === HyperFrames 视频渲染管线(stage-12:已退役 ffmpeg drawbox)===
@@ -579,9 +583,18 @@ function scriptToHyperframesVariables(script: ScriptInput | undefined): Record<s
   if (!script) return D;
   const [title1, title2] = splitTitleTwoLines(script.title ?? D.title1);
   const firstScene = script.scenes?.[0];
+  // PM brief 优先级:audience+sellingPoint 组合成 eyebrow;tone 影响 cta 后缀
+  // 没 brief 字段时退回 platform / hook 等老逻辑
+  const eyebrowFromBrief = script.audience && script.sellingPoints?.length
+    ? `给 ${script.audience} · ${script.sellingPoints.slice(0, 2).join(' / ')}`
+    : '';
+  const eyebrow = eyebrowFromBrief
+    || script.platform
+    || script.hook?.slice(0, 24)
+    || D.eyebrow;
   return {
     badge: D.badge,
-    eyebrow: (script.platform || script.hook?.slice(0, 24) || D.eyebrow).trim(),
+    eyebrow: eyebrow.trim().slice(0, 40),
     title1: title1 || D.title1,
     title2: title2 || D.title2,
     desc: (script.hook || firstScene?.caption || D.desc).trim(),
