@@ -205,7 +205,7 @@ function InputColumn({
           onChange={(e) => setTopic(e.target.value)}
           placeholder="比如:本地素材自动混剪"
           disabled={running}
-          className="w-full rounded-xl border border-border-cream bg-white/80 px-3 py-2 text-sm text-near-black outline-none placeholder:text-stone-gray focus:border-terracotta/40 disabled:opacity-50"
+          className="w-full rounded-xl border border-border-cream bg-white/80 px-3 py-2 text-sm text-near-black outline-none placeholder:text-stone-gray focus:border-iris-400 disabled:opacity-50"
         />
       </Field>
 
@@ -216,7 +216,7 @@ function InputColumn({
           placeholder="一句话讲清楚你想推什么、对谁有用、为什么有用"
           rows={4}
           disabled={running}
-          className="w-full resize-none rounded-xl border border-border-cream bg-white/80 px-3 py-2 text-sm text-near-black outline-none placeholder:text-stone-gray focus:border-terracotta/40 disabled:opacity-50"
+          className="w-full resize-none rounded-xl border border-border-cream bg-white/80 px-3 py-2 text-sm text-near-black outline-none placeholder:text-stone-gray focus:border-iris-400 disabled:opacity-50"
         />
       </Field>
 
@@ -232,7 +232,7 @@ function InputColumn({
                 disabled={running}
                 className={`rounded-full px-3 py-1 text-xs transition disabled:opacity-50 ${
                   active
-                    ? 'bg-terracotta text-white shadow-sm'
+                    ? 'bg-iris-600 text-white shadow-sm'
                     : 'bg-warm-sand/50 text-olive-gray hover:bg-warm-sand'
                 }`}
               >
@@ -250,7 +250,7 @@ function InputColumn({
           onChange={(e) => setVisualStyle(e.target.value)}
           placeholder="冷静实拍 / CG 抽象 / 胶片质感"
           disabled={running}
-          className="w-full rounded-xl border border-border-cream bg-white/80 px-3 py-2 text-sm text-near-black outline-none placeholder:text-stone-gray focus:border-terracotta/40 disabled:opacity-50"
+          className="w-full rounded-xl border border-border-cream bg-white/80 px-3 py-2 text-sm text-near-black outline-none placeholder:text-stone-gray focus:border-iris-400 disabled:opacity-50"
         />
       </Field>
 
@@ -266,7 +266,7 @@ function InputColumn({
         type="button"
         onClick={onGo}
         disabled={!canRun || running}
-        className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-terracotta/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-iris-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-iris-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {running ? <Loader2 size={15} className="animate-spin" /> : <Rocket size={15} />}
         {running ? '正在制作…' : '一键做一条'}
