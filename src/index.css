@@ -31,6 +31,33 @@ body,
   text-rendering: optimizeLegibility;
 }
 
+/* ── scrollbar 极细 iris 紫 · 未来主义 minimal ────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 58, 237, 0.4) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.3);
+  border-radius: 999px;
+  transition: background 200ms;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.55);
+}
+
+/* ── selection 紫色高亮 ────────── */
+::selection {
+  background: rgba(124, 58, 237, 0.25);
+  color: #1A1A1A;
+}
+
 /* ── 未来主义 utility class ────────────────────────────── */
 @layer utilities {
   /* 细网格 dot pattern overlay — 给 hero / section 加一层未来感 */
