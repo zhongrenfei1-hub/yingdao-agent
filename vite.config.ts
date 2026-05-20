@@ -639,6 +639,47 @@ function runHyperframes(args: string[], cwd: string): Promise<void> {
   });
 }
 
+// 把 script 各分镜的 voiceover 文本拼成一整段旁白,供 edge-tts 合成
+function collectNarrationText(script: ScriptInput | undefined): string {
+  if (!script) return '';
+  const scenes = script.scenes ?? [];
+  const parts: string[] = [];
+  if (script.hook) parts.push(script.hook);
+  for (const s of scenes) {
+    const vo = (s as { voiceover?: string }).voiceover;
+    if (vo) parts.push(vo);
+  }
+  if (script.cta) parts.push(script.cta);
+  return parts.join('。').replace(/。{2,}/g, '。').trim();
+}
+
+// 用 edge-tts(GPL-3 pip 包,运行时依赖)生成中文 narration mp3
+async function generateNarrationMp3(text: string, outPath: string): Promise<void> {
+  const scriptPath = path.resolve(__dirname, 'scripts/tts-edge.py');
+  const voice = process.env.YINGDAO_TTS_VOICE ?? 'zh-CN-XiaoxiaoNeural';
+  return new Promise((resolve, reject) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      ctrl.abort();
+      reject(new Error('edge-tts 超时(60s)'));
+    }, 60_000);
+    const child = spawn('python3', [scriptPath, outPath, voice], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      signal: ctrl.signal,
+    });
+    let stderr = '';
+    child.stdin.write(text);
+    child.stdin.end();
+    child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+    child.on('error', (err) => { clearTimeout(timer); reject(err); });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (code === 0) resolve();
+      else reject(new Error(`edge-tts exit ${code}: ${stderr.slice(-300)}`));
+    });
+  });
+}
+
 async function renderViaHyperframes(
   script: ScriptInput | undefined,
   assetPaths: string[] | undefined,
@@ -677,6 +718,22 @@ async function renderViaHyperframes(
     cwd = HF_DEFAULT_COMPOSITION;
     durationSeconds = DEFAULT_DURATION_SECONDS;
     variables = scriptToHyperframesVariables(script);
+
+    // stage-60:如果走 short-video-pitch(带 narration audio)+ script 有 scene voiceover,
+    // 先用 edge-tts 合成旁白 mp3 写到 composition 目录,传 narrationUrl variable 覆盖默认 Kokoro
+    if (composition === 'short-video-pitch') {
+      const narrationText = collectNarrationText(script);
+      if (narrationText) {
+        try {
+          const filename = `narration-edge-${Date.now().toString(36)}.mp3`;
+          const narrationPath = path.join(cwd, filename);
+          await generateNarrationMp3(narrationText, narrationPath);
+          variables.narrationUrl = `./${filename}`;
+        } catch (e) {
+          console.warn('[render] edge-tts 生成旁白失败,回退默认 Kokoro:', e instanceof Error ? e.message : String(e));
+        }
+      }
+    }
   }
 
   // 注意:hyperframes 的 --docker 是"用 docker 跑 chrome" 不是"我在 docker 里",

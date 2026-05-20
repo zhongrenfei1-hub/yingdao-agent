@@ -4,7 +4,8 @@
   data-composition-variables='[
     {"id":"brand","type":"string","label":"品牌徽标","default":"影刀 × Centaur Loop"},
     {"id":"ctaText","type":"string","label":"CTA 按钮文字","default":"Star 我们的仓库"},
-    {"id":"accent","type":"color","label":"主色","default":"#7c3aed"}
+    {"id":"accent","type":"color","label":"主色","default":"#7c3aed"},
+    {"id":"narrationUrl","type":"string","label":"旁白音频 URL","default":"./narration-kokoro.wav"}
   ]'
 >
   <head>
@@ -346,6 +347,10 @@
           if (vars.ctaText) document.getElementById("v-cta").textContent = vars.ctaText;
           if (vars.accent) {
             document.documentElement.style.setProperty("--accent", vars.accent);
+          }
+          if (vars.narrationUrl) {
+            const narration = document.getElementById("narration");
+            if (narration) narration.src = vars.narrationUrl;
           }
         }
       } catch (e) {
