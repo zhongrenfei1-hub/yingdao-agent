@@ -32,3 +32,18 @@ coverage/
 # Generated demo video assets
 public/generated/*
 !public/generated/.gitkeep
+
+# Claude Code worktree 元数据(影刀 dev 用)
+.claude/
+
+# Docker build 产生的 chrome-headless-shell(只在容器内)
+chrome-headless-shell/
+
+# 用户运行时上传的素材(stage-17)
+compositions/local-asset-remix/assets/uploads/
+
+# hyperframes 字体 / Chrome cache
+.cache/
+
+# 临时调试输出
+/tmp/yingdao-*
