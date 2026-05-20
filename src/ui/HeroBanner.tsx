@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { animate } from 'framer-motion';
+import { animate, motion } from 'framer-motion';
 import { Layers, MessagesSquare, Package, Rocket } from 'lucide-react';
 
 const IRIS = '#7c3aed';
@@ -70,13 +70,21 @@ export default function HeroBanner() {
             </div>
           </div>
 
-          {/* 4 能力卡 · 紧凑 + lift hover */}
-          <div className="grid w-full max-w-md grid-cols-2 gap-2">
+          {/* 4 能力卡 · 紧凑 + lift hover + stagger 入场 */}
+          <motion.div
+            className="grid w-full max-w-md grid-cols-2 gap-2"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
+            }}
+          >
             <FeatureCard icon={<Rocket size={14} />} label="快速制作" hint="一屏 4 步出片" />
             <FeatureCard icon={<MessagesSquare size={14} />} label="Loop 工作台" hint="PM 访谈 → cycle" />
             <FeatureCard icon={<Package size={14} />} label="发布包" hint="6 平台 × A/B" />
             <FeatureCard icon={<Layers size={14} />} label="本地素材" hint="拖入 → 真混剪" />
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -125,9 +133,13 @@ function FeatureCard({
   hint: string;
 }) {
   return (
-    <div
+    <motion.div
       className="lift-hover flex items-center gap-2 rounded-xl border bg-white/75 px-3 py-2"
       style={{ borderColor: 'rgba(124,58,237,0.18)' }}
+      variants={{
+        hidden: { opacity: 0, y: 12 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.2, 0.8, 0.2, 1] } },
+      }}
     >
       <span
         className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm"
@@ -141,6 +153,6 @@ function FeatureCard({
         </p>
         <p className="truncate font-mono text-[10px] text-stone-gray">{hint}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }
