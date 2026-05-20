@@ -4,6 +4,8 @@
 > hyperframes video pipeline.
 > **`docker compose up -d` → fill Gemini/DeepSeek/OpenAI key in the browser → real 9:16 mp4 out.**
 
+[🎬 **See a real rendered sample (637KB mp4) → docs/sample-output/**](./docs/sample-output/)
+
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)

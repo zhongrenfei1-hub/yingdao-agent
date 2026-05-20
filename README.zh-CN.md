@@ -3,6 +3,8 @@
 > 基于 **Centaur Loop** 工作台的短视频增长 Agent + AI 产品经理需求访谈 + hyperframes 视频管线
 > **一键 `docker compose up -d` 起服 + 浏览器里填 Gemini/DeepSeek/OpenAI key + 出片**
 
+[🎬 **看真实出片样品(637KB mp4)→ docs/sample-output/**](./docs/sample-output/)
+
 [![MIT License](https://img.shields.io/badge/license-MIT-111111.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
