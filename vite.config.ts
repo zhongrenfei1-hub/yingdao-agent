@@ -867,6 +867,28 @@ function imageScrapeApiPlugin(): Plugin {
   };
 }
 
+// 极简 health endpoint:返回 200 + 当前服务状态,docker healthcheck 用
+function healthApiPlugin(): Plugin {
+  return {
+    name: 'yingdao-health-api',
+    configureServer(server) {
+      server.middlewares.use('/api/_health', (req, res) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+          sendJson(res, 405, { error: 'Method not allowed' });
+          return;
+        }
+        sendJson(res, 200, {
+          status: 'ok',
+          service: 'yingdao-agent',
+          version: '0.1.0',
+          uptime: process.uptime(),
+          ts: Date.now(),
+        });
+      });
+    },
+  };
+}
+
 function videoRenderApiPlugin(): Plugin {
   const outputDir = path.resolve(__dirname, 'public/generated');
   const videoPath = path.join(outputDir, 'yingdao-auto-remix-demo.mp4');
@@ -929,7 +951,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react(), centaurRuntimeApiPlugin(env), assetUploadApiPlugin(), imageScrapeApiPlugin(), videoRenderApiPlugin()],
+    plugins: [react(), centaurRuntimeApiPlugin(env), healthApiPlugin(), assetUploadApiPlugin(), imageScrapeApiPlugin(), videoRenderApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),

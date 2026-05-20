@@ -27,6 +27,10 @@ check() {
 
 printf "${PURPLE}🛠 影刀 smoke test · base=%s${RESET}\n\n" "$BASE_URL"
 
+# 0. health
+status=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 5 "$BASE_URL/api/_health")
+check "GET /api/_health" "200" "$status"
+
 # 1. 首页 200
 status=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 5 "$BASE_URL/")
 check "GET /" "200" "$status"
