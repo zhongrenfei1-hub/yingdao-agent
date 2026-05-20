@@ -51,7 +51,12 @@ export default function HeroBanner() {
 
             <p className="mt-3 max-w-xl text-sm leading-7 text-olive-gray">
               先访谈搞清楚需求 · 真用本地素材混剪 · 出 mp4 + 抖音 / TikTok / 小红书发布包。<br />
-              不是 SaaS · 不上传素材 · <span className="font-mono text-[12px] text-near-black">docker compose up -d</span>
+              不是 SaaS · 不上传素材。
+            </p>
+            <p className="mt-2 inline-flex items-center gap-2 rounded-md border bg-near-black/95 px-3 py-1.5 font-mono text-[12px] text-iris-200"
+               style={{ borderColor: 'rgba(124,58,237,0.4)', color: '#ddd6fe' }}>
+              <span className="text-iris-400" style={{ color: '#a78bfa' }}>$</span>
+              <span className="term-cursor">docker compose up -d</span>
             </p>
 
             {/* 数字 stat 横排 · monospace + tabular-nums + 锐利 */}
