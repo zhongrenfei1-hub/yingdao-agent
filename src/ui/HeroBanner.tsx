@@ -1,125 +1,77 @@
-import { useEffect, useState } from 'react';
-import { animate, motion } from 'framer-motion';
 import { Layers, MessagesSquare, Package, Rocket } from 'lucide-react';
 
 const IRIS = '#7c3aed';
 
 /**
- * 影刀产品首屏 hero · stage-65 重做
- * Vibe:极简 / 高级 / 未来主义 / 锐利字 / 微动画
+ * 影刀产品首屏 hero banner
+ *
+ * 风格参考火花 / aitoearn.ai 的 sections + 现代浅色渐变 + 大字 hero。
+ * 用影刀自己的 iris 紫色板,不引入新色。
  */
 export default function HeroBanner() {
   return (
     <section
-      className="relative mb-5 overflow-hidden rounded-3xl border bg-white/40 backdrop-blur-sm"
-      style={{ borderColor: 'rgba(124,58,237,0.16)' }}
+      className="relative mb-4 overflow-hidden rounded-3xl border border-border-cream backdrop-blur-sm"
+      style={{
+        background:
+          'linear-gradient(135deg, #faf5ff 0%, #f3eaff 35%, #ede0ff 70%, #f9f6ff 100%)',
+        borderColor: 'rgba(124,58,237,0.18)',
+      }}
     >
       {/* 紫色光晕 */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full opacity-50 blur-3xl"
-        style={{ background: 'radial-gradient(closest-side, rgba(124,58,237,0.4), transparent)' }}
+        className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-50 blur-3xl"
+        style={{ background: 'radial-gradient(closest-side, rgba(124,58,237,0.35), transparent)' }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full opacity-40 blur-3xl"
-        style={{ background: 'radial-gradient(closest-side, rgba(124,58,237,0.28), transparent)' }}
+        className="pointer-events-none absolute -bottom-20 -left-12 h-56 w-56 rounded-full opacity-40 blur-3xl"
+        style={{ background: 'radial-gradient(closest-side, rgba(124,58,237,0.25), transparent)' }}
       />
-      {/* 细网格 dot pattern · 未来感 */}
-      <div aria-hidden className="grain-grid pointer-events-none absolute inset-0 opacity-40" />
 
-      <div className="relative px-6 py-8 md:px-9 md:py-10">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <div className="relative px-5 py-6 md:px-7 md:py-7">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3">
+              <img
+                src="/yingdao-logo.png"
+                alt="影刀 logo"
+                className="h-14 w-14 shrink-0 drop-shadow-md"
+                style={{ filter: 'drop-shadow(0 4px 12px rgba(124,58,237,0.2))' }}
+              />
               <span
-                className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em]"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium"
                 style={{
-                  background: 'rgba(124,58,237,0.10)',
+                  background: 'rgba(124,58,237,0.12)',
                   color: IRIS,
-                  borderColor: 'rgba(124,58,237,0.30)',
+                  border: '1px solid rgba(124,58,237,0.25)',
                 }}
               >
-                <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: IRIS, boxShadow: `0 0 8px ${IRIS}` }} />
-                Yingdao Agent / v0.1.0
+                影刀 · Yingdao Agent · v0.1.0
               </span>
             </div>
-
-            <h1 className="text-sharp mt-4 text-[2.2rem] leading-[1.05] text-near-black md:text-[2.75rem]">
-              本地跑的<span style={{ color: IRIS }}> AI 产品经理</span>,
-              <br />
-              一句话出真<span className="num-stat" style={{ color: IRIS }}>9 : 16</span>短视频
+            <h1 className="mt-3 text-2xl font-bold leading-tight text-near-black md:text-3xl">
+              本地跑的 <span style={{ color: IRIS }}>AI 产品经理</span>,
+              <br className="hidden md:inline" />
+              帮你出真 9:16 短视频 + 多平台发布包
             </h1>
-
-            <p className="mt-3 max-w-xl text-sm leading-7 text-olive-gray">
-              先访谈搞清楚需求 · 真用本地素材混剪 · 出 mp4 + 抖音 / TikTok / 小红书发布包。<br />
-              不是 SaaS · 不上传素材。
+            <p className="mt-2 text-sm leading-6 text-olive-gray">
+              先访谈搞清楚需求 → 真用本地素材混剪 → 出 mp4 + 抖音 / TikTok / 小红书发布包。
+              <br className="hidden md:inline" />
+              不是 SaaS · 不上传素材 · Docker 一行起服。
             </p>
-            <p className="mt-2 inline-flex items-center gap-2 rounded-md border bg-near-black/95 px-3 py-1.5 font-mono text-[12px] text-iris-200"
-               style={{ borderColor: 'rgba(124,58,237,0.4)', color: '#ddd6fe' }}>
-              <span className="text-iris-400" style={{ color: '#a78bfa' }}>$</span>
-              <span className="term-cursor">docker compose up -d</span>
-            </p>
-
-            {/* 数字 stat 横排 · monospace + tabular-nums + 锐利 */}
-            <div className="mt-6 grid max-w-md grid-cols-4 gap-3">
-              <Stat value="40" suffix="+" label="commits" />
-              <Stat value="8" suffix="" label="smoke" />
-              <Stat value="11" suffix="" label="unit" />
-              <Stat value="6" suffix="" label="platforms" />
-            </div>
           </div>
 
-          {/* 4 能力卡 · 紧凑 + lift hover + stagger 入场 */}
-          <motion.div
-            className="grid w-full max-w-md grid-cols-2 gap-2"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
-            }}
-          >
+          <div className="grid w-full max-w-md grid-cols-2 gap-2">
             <FeatureCard icon={<Rocket size={14} />} label="快速制作" hint="一屏 4 步出片" />
-            <FeatureCard icon={<MessagesSquare size={14} />} label="Loop 工作台" hint="PM 访谈 → cycle" />
-            <FeatureCard icon={<Package size={14} />} label="发布包" hint="6 平台 × A/B" />
-            <FeatureCard icon={<Layers size={14} />} label="本地素材" hint="拖入 → 真混剪" />
-          </motion.div>
+            <FeatureCard icon={<MessagesSquare size={14} />} label="Loop 工作台" hint="PM 访谈 → 自动 cycle" />
+            <FeatureCard icon={<Package size={14} />} label="发布包" hint="3 平台 × A/B 文案" />
+            <FeatureCard icon={<Layers size={14} />} label="本地素材" hint="拖入 mp4 真接入混剪" />
+          </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function Stat({
-  value,
-  suffix,
-  label,
-}: {
-  value: string;
-  suffix: string;
-  label: string;
-}) {
-  const target = Number(value) || 0;
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    const controls = animate(0, target, {
-      duration: 1.4,
-      ease: [0.2, 0.8, 0.2, 1],
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    });
-    return () => controls.stop();
-  }, [target]);
-  return (
-    <div className="border-l-2 pl-3" style={{ borderColor: 'rgba(124,58,237,0.4)' }}>
-      <p className="num-stat text-2xl font-semibold leading-none text-near-black">
-        {display}
-        <span style={{ color: IRIS }}>{suffix}</span>
-      </p>
-      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-stone-gray">
-        {label}
-      </p>
-    </div>
   );
 }
 
@@ -133,13 +85,9 @@ function FeatureCard({
   hint: string;
 }) {
   return (
-    <motion.div
-      className="lift-hover flex items-center gap-2 rounded-xl border bg-white/75 px-3 py-2"
+    <div
+      className="flex items-center gap-2 rounded-xl border bg-white/70 px-3 py-2 transition hover:-translate-y-0.5 hover:shadow-sm"
       style={{ borderColor: 'rgba(124,58,237,0.18)' }}
-      variants={{
-        hidden: { opacity: 0, y: 12 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.2, 0.8, 0.2, 1] } },
-      }}
     >
       <span
         className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm"
@@ -148,11 +96,9 @@ function FeatureCard({
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="truncate text-xs font-semibold text-near-black" style={{ letterSpacing: '-0.01em' }}>
-          {label}
-        </p>
-        <p className="truncate font-mono text-[10px] text-stone-gray">{hint}</p>
+        <p className="truncate text-xs font-medium text-near-black">{label}</p>
+        <p className="truncate text-[10px] text-stone-gray">{hint}</p>
       </div>
-    </motion.div>
+    </div>
   );
 }

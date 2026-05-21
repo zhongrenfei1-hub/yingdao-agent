@@ -447,7 +447,7 @@ function StepRow({ step }: { step: QuickStepState }) {
         ? 'LLM · 通常 5-30s'
         : null;
   return (
-    <li className={`lift-hover rounded-xl border p-3 ${borderCls}`}>
+    <li className={`rounded-xl border p-3 ${borderCls}`}>
       <div className="flex items-center gap-2">
         <StepIcon status={step.status} />
         <span className="text-sm font-medium text-near-black">

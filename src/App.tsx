@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useLoopStore } from './core/loopStore';
 import { ALL_LOOP_CONFIGS } from './core/loopConfigs';
 import LoopConversationWorkbench from './ui/LoopConversationWorkbench';
 import QuickMakeWorkbench from './ui/QuickMakeWorkbench';
 import { I18nProvider, useI18n } from './i18n';
 import { useRuntimeStatus } from './hooks/useRuntimeStatus';
-import { BookOpen, Github, Languages, MessagesSquare, Rocket } from 'lucide-react';
+import { BookOpen, Github, Languages, MessagesSquare, Rocket, SlidersHorizontal } from 'lucide-react';
 import RuntimeDropdown from './ui/RuntimeDropdown';
 import ImageScrapePanel from './ui/ImageScrapePanel';
 import TtsPanel from './ui/TtsPanel';
@@ -47,24 +46,24 @@ function AppShell() {
             href="https://github.com/zhongrenfei1-hub/yingdao-agent"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-stone-gray transition hover:bg-white/60 hover:text-near-black"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-stone-gray transition hover:bg-white/60 hover:text-near-black"
           >
-            <Github size={13} /> github
+            <Github size={14} /> GitHub
           </a>
           <a
             href="https://github.com/zhongrenfei1-hub/yingdao-agent#readme"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-stone-gray transition hover:bg-white/60 hover:text-near-black"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-stone-gray transition hover:bg-white/60 hover:text-near-black"
           >
-            <BookOpen size={13} /> docs
+            <BookOpen size={14} /> 文档
           </a>
           <button
             type="button"
             onClick={toggleLocale}
-            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-stone-gray transition hover:bg-white/60 hover:text-near-black"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-stone-gray transition hover:bg-white/60 hover:text-near-black"
           >
-            <Languages size={13} /> {t('app.language')}
+            <Languages size={14} /> {t('app.language')}
           </button>
         </nav>
       </header>
@@ -89,17 +88,7 @@ function AppShell() {
         />
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-        >
-          {tab === 'quick' ? <QuickMakeWorkbench /> : <LoopConversationWorkbench runtime={runtime} />}
-        </motion.div>
-      </AnimatePresence>
+      {tab === 'quick' ? <QuickMakeWorkbench /> : <LoopConversationWorkbench runtime={runtime} />}
 
       <RuntimeDropdown runtime={runtime} floating />
       <ImageScrapePanel floating />
@@ -125,22 +114,16 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className="relative flex items-center gap-2 px-4 py-3 text-sm transition-colors"
-      style={{ color: active ? '#7c3aed' : '#6B6B5E', marginBottom: '-1px' }}
+      className="relative flex items-center gap-2 px-4 py-3 text-sm transition"
+      style={{
+        color: active ? '#7c3aed' : '#6B6B5E',
+        borderBottom: active ? '2px solid #7c3aed' : '2px solid transparent',
+        marginBottom: '-1px',
+      }}
     >
       <span style={{ color: active ? '#7c3aed' : '#9B9B8F' }}>{icon}</span>
-      <span className="font-medium" style={{ letterSpacing: active ? '-0.01em' : 0 }}>{label}</span>
-      <span className="hidden font-mono text-[10px] uppercase tracking-[0.15em] text-stone-gray sm:inline">
-        / {hint}
-      </span>
-      {active && (
-        <motion.span
-          layoutId="tab-underline"
-          className="absolute inset-x-2 -bottom-[2px] h-[2px]"
-          style={{ background: '#7c3aed', boxShadow: '0 0 8px rgba(124,58,237,0.5)' }}
-          transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-        />
-      )}
+      <span className="font-medium">{label}</span>
+      <span className="hidden text-[10px] text-stone-gray sm:inline">· {hint}</span>
     </button>
   );
 }

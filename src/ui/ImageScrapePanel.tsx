@@ -78,15 +78,15 @@ export default function ImageScrapePanel({ floating = true }: { floating?: boole
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="lift-hover inline-flex items-center gap-2 rounded-full border px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em] shadow-lg backdrop-blur-md"
+        className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs shadow-lg backdrop-blur-md transition"
         style={{
           borderColor: 'rgba(124,58,237,0.3)',
           background: 'rgba(255,255,255,0.95)',
           color: IRIS,
         }}
       >
-        <ImageIcon size={13} />
-        <span>image</span>
+        <ImageIcon size={14} />
+        <span className="font-medium">配图</span>
       </button>
 
       {open && (

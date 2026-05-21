@@ -97,7 +97,7 @@ export default function RuntimeDropdown({ runtime, floating = false }: RuntimeDr
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="lift-hover inline-flex items-center gap-2 rounded-full border px-3 py-2 font-mono text-[11px] uppercase tracking-[0.12em] shadow-lg backdrop-blur-md"
+        className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs shadow-lg backdrop-blur-md transition"
         style={
           customActive
             ? { borderColor: IRIS, background: 'rgba(124,58,237,0.10)', color: IRIS }

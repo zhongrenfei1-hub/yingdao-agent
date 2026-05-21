@@ -133,7 +133,7 @@ function PlatformCard({
   };
 
   return (
-    <div className="lift-hover space-y-2.5 rounded-xl border border-border-cream bg-white/70 p-3">
+    <div className="space-y-2.5 rounded-xl border border-border-cream bg-white/70 p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-stone-gray">{platform.platform}</span>
         <div className="flex items-center gap-1.5">

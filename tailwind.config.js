@@ -32,11 +32,6 @@ export default {
       fontFamily: {
         serif: ['"Noto Serif SC"', 'Georgia', 'serif'],
         sans: ['"Inter"', '"Noto Sans SC"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
-      },
-      letterSpacing: {
-        tightest: '-0.04em',
-        sharp: '-0.025em',
       },
       // 圆角阶梯(0.625rem 基准,shadcn 标准)
       borderRadius: {
