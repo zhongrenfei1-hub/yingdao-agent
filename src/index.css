@@ -15,15 +15,25 @@
   --iris-ring: rgba(124, 58, 237, 0.18);
 }
 
+/* stage-77 · AiToEarn 火花壳 · 浅色 shadcn 风 */
+:root {
+  --background: #ffffff;
+  --foreground: #18181b;
+  --sidebar: #fafafa;
+  --sidebar-border: #e4e4e7;
+  --border: #e4e4e7;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+}
+
 html,
 body,
 #root {
-  background:
-    radial-gradient(at 0% 0%, var(--iris-50) 0%, transparent 50%),
-    radial-gradient(at 100% 0%, var(--iris-100) 0%, transparent 55%),
-    radial-gradient(at 100% 100%, var(--iris-50) 0%, transparent 50%),
-    linear-gradient(180deg, #fffefb 0%, #faf5ff 100%);
-  background-attachment: fixed;
+  background: var(--background);
+  color: var(--foreground);
   min-height: 100vh;
 }
 
